@@ -1,0 +1,32 @@
+name: Reset demo data
+
+# This restores only the showcase account. Customer workspaces are never reset.
+
+on:
+  schedule:
+    # Every day at 04:00 UTC.
+    - cron: '0 4 * * *'
+  # Allows a manual reset from the Actions tab.
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Reseed Supabase
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Auth user id that owns the showcase restaurants. Without it the
+          # reset hands the demo menus to a placeholder owner.
+          SHOWCASE_USER_ID: ${{ secrets.SHOWCASE_USER_ID }}
+        run: npm run seed

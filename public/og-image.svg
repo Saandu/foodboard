@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2f4f43"/>
+      <stop offset="100%" stop-color="#16261f"/>
+    </linearGradient>
+    <clipPath id="phone">
+      <rect x="762" y="72" width="348" height="486" rx="30"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <text x="90" y="214" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif"
+        font-size="82" font-weight="600">FoodBoard</text>
+  <text x="90" y="272" fill="#a9c7b6" font-family="Helvetica, Arial, sans-serif"
+        font-size="27" font-weight="700" letter-spacing="4">DIGITAL MENU BUILDER</text>
+
+  <text x="90" y="352" fill="#e6efe8" font-family="Helvetica, Arial, sans-serif" font-size="26">
+    Multilingual menus, prices and EU allergen
+  </text>
+  <text x="90" y="390" fill="#e6efe8" font-family="Helvetica, Arial, sans-serif" font-size="26">
+    labelling — published to diners by QR code.
+  </text>
+
+  <g transform="translate(90 452)" font-family="Helvetica, Arial, sans-serif" font-size="21" font-weight="700">
+    <rect x="0" y="0" width="104" height="40" rx="20" fill="#ffffff" opacity="0.14"/>
+    <text x="26" y="26" fill="#ffffff">Vue 3</text>
+    <rect x="120" y="0" width="126" height="40" rx="20" fill="#ffffff" opacity="0.14"/>
+    <text x="143" y="26" fill="#ffffff">Supabase</text>
+    <rect x="262" y="0" width="150" height="40" rx="20" fill="#ffffff" opacity="0.14"/>
+    <text x="284" y="26" fill="#ffffff">Postgres RLS</text>
+  </g>
+
+  <!-- A published menu, so the preview shows the product rather than describing it. -->
+  <rect x="774" y="86" width="348" height="486" rx="30" fill="#000000" opacity="0.28"/>
+  <g clip-path="url(#phone)">
+    <rect x="762" y="72" width="348" height="486" fill="#fbf9f6"/>
+    <rect x="762" y="72" width="348" height="150" fill="#2f4f43"/>
+    <text x="792" y="116" fill="#a9c7b6" font-family="Helvetica, Arial, sans-serif"
+          font-size="13" font-weight="700" letter-spacing="2.5">MENÙ DELLA SERA</text>
+    <text x="792" y="176" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif"
+          font-size="38" font-weight="600">Trattoria</text>
+    <text x="792" y="206" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif"
+          font-size="26" font-weight="600" opacity="0.92">Mareluna</text>
+
+    <g font-family="Helvetica, Arial, sans-serif">
+      <text x="792" y="266" fill="#2f4f43" font-size="12" font-weight="800" letter-spacing="2">DAL MARE</text>
+      <line x1="866" y1="262" x2="1082" y2="262" stroke="#e7e1d8" stroke-width="1.5"/>
+
+      <text x="792" y="306" fill="#1b1a18" font-size="17" font-weight="600">Crudo di Ricciola</text>
+      <text x="1082" y="306" fill="#1b1a18" font-size="17" font-weight="700" text-anchor="end">18.00€</text>
+      <text x="792" y="330" fill="#6b665f" font-size="13">Agrumi di Sicilia, olio extravergine</text>
+      <rect x="792" y="342" width="58" height="22" rx="11" fill="#ffffff" stroke="#e7e1d8"/>
+      <text x="805" y="357" fill="#6b665f" font-size="11" font-weight="600">Pesce</text>
+
+      <line x1="792" y1="388" x2="1082" y2="388" stroke="#e7e1d8" stroke-width="1.5"/>
+
+      <text x="792" y="424" fill="#1b1a18" font-size="17" font-weight="600">Cozze alla Marinara</text>
+      <text x="1082" y="424" fill="#1b1a18" font-size="17" font-weight="700" text-anchor="end">14.00€</text>
+      <text x="792" y="448" fill="#6b665f" font-size="13">Pomodorino, prezzemolo, pane tostato</text>
+
+      <line x1="792" y1="480" x2="1082" y2="480" stroke="#e7e1d8" stroke-width="1.5"/>
+
+      <text x="792" y="516" fill="#1b1a18" font-size="17" font-weight="600">Branzino in Crosta</text>
+      <text x="1082" y="516" fill="#1b1a18" font-size="17" font-weight="700" text-anchor="end">26.00€</text>
+    </g>
+  </g>
+  <rect x="762" y="72" width="348" height="486" rx="30" fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2"/>
+</svg>

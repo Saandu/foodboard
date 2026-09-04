@@ -1,0 +1,5 @@
+<template>
+  <main class="error-page"><section><span>FoodBoard</span><h1>We couldn’t load that page.</h1><p>Check your connection, then return to your workspace and try again.</p><button type="button" class="btn btn-primary" @click="router.push('/structures')">Return to workspace</button></section></main>
+</template>
+<script setup>import { useRouter } from 'vue-router'; const router = useRouter()</script>
+<style scoped>.error-page { min-height: 100dvh; display: grid; place-items: center; padding: var(--s-5); background: var(--c-bg); }.error-page section { width: min(100%, 520px); padding: var(--s-6); background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--r-md); }.error-page span { color: var(--c-brand); font-size: .78rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }.error-page h1 { margin-top: var(--s-3); font-size: 1.8rem; line-height: 1.15; }.error-page p { margin: var(--s-3) 0 var(--s-5); color: var(--c-ink-2); line-height: 1.55; }</style>
