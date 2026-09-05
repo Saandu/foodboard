@@ -73,7 +73,7 @@
               <!-- A button, not a bare img: the photo is worth opening, and a
                    thumbnail crop hides most of it. -->
               <button v-if="productPhoto(item)" type="button" class="dish__photo-btn"
-                      :aria-label="copy.enlarge" @click="openPhoto(item)">
+                      :aria-label="`${copy.enlarge}: ${productTitle(item)}`" @click="openPhoto(item)">
                 <img :src="productPhoto(item)" class="dish__photo" alt="" loading="lazy" decoding="async">
               </button>
             </li>
@@ -125,7 +125,7 @@ import { fetchPublicMenu } from '../api/structures.js'
 import PhotoLightbox from '../components/PhotoLightbox.vue'
 import { descriptorImage, mediaUrl } from '../media.js'
 import { fieldValue, tabFor as resolveTab } from '../menuTranslations.js'
-import { menuPageMeta, resetPageMeta, setPageMeta } from '../pageMeta.js'
+import { menuPageMeta, resetPageMeta, resetPageLanguage, setPageLanguage, setPageMeta } from '../pageMeta.js'
 import LanguagePicker from '../components/LanguagePicker.vue'
 
 const route = useRoute()
@@ -245,6 +245,10 @@ watchEffect(() => {
   }))
 })
 
+// The menu is written in the language the diner picked, which is rarely the
+// language the dashboard is in. Announce that one while the menu is on screen.
+watchEffect(() => setPageLanguage(currentLang.value))
+
 const selectCategory = (categoryId) => {
   selectedCategoryId.value = categoryId
   bodyEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -362,7 +366,10 @@ const openPhoto = (item) => {
 const closePhoto = () => { photo.value = { src: '', title: '' } }
 
 // Navigating back to the dashboard must not keep the restaurant's title.
-onBeforeUnmount(resetPageMeta)
+onBeforeUnmount(() => {
+  resetPageMeta()
+  resetPageLanguage()
+})
 
 const productAllergens = (item) => {
   const field = item?.editModal?.find(f => f.type === 'allergens')

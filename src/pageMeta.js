@@ -38,6 +38,42 @@ export const setPageMeta = ({ title, description } = {}) => {
 
 export const resetPageMeta = () => setPageMeta()
 
+/* -------------------------------------------------------------------------
+ * <html lang>
+ *
+ * index.html is served with lang="en" and nothing ever changed it, so a
+ * Romanian dashboard and a Japanese menu both announced themselves as
+ * English. That is not cosmetic: it is what a screen reader reads the
+ * pronunciation rules from, and what Google takes the page's language to be.
+ *
+ * There are two languages in play and they are not the same one. The admin
+ * interface has its own locale, while a published menu is written in whatever
+ * the restaurant chose — a language the dashboard may not even be translated
+ * into. The menu wins while it is on screen; the interface locale is restored
+ * when it unmounts.
+ * ---------------------------------------------------------------------- */
+
+const DEFAULT_LANGUAGE = 'en'
+
+let baseLanguage = DEFAULT_LANGUAGE
+
+const applyLanguage = (lang) => {
+  if (typeof document === 'undefined' || !lang) return
+  document.documentElement.setAttribute('lang', lang)
+}
+
+/** Records the admin interface locale and applies it. */
+export const setBaseLanguage = (lang) => {
+  baseLanguage = lang || DEFAULT_LANGUAGE
+  applyLanguage(baseLanguage)
+}
+
+/** Overrides the document language, e.g. for the language a menu is written in. */
+export const setPageLanguage = (lang) => applyLanguage(lang || baseLanguage)
+
+/** Puts the interface locale back. */
+export const resetPageLanguage = () => applyLanguage(baseLanguage)
+
 /** Builds the menu's title and description from what the owner published. */
 export const menuPageMeta = ({ restaurant, menu, profile, description }) => {
   const name = restaurant || 'Menu'

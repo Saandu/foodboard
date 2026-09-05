@@ -54,9 +54,15 @@ const openWorkspace = async () => {
   // the same bootstrap the router uses, so the two cannot drift apart.
   store.clearSession()
   await store.ensureSession()
-  const redirect = typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
-    ? route.query.redirect
-    : '/structures'
+  // Only a path on this origin. startsWith('/') alone is not that test:
+  // '//evil.example' and '/\\evil.example' both pass it and are read as
+  // protocol-relative URLs pointing somewhere else entirely.
+  const requested = route.query.redirect
+  const isInternalPath = typeof requested === 'string'
+    && requested.startsWith('/')
+    && !requested.startsWith('//')
+    && !requested.startsWith('/\\')
+  const redirect = isInternalPath ? requested : '/structures'
   await router.push(redirect)
 }
 

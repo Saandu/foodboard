@@ -3,7 +3,7 @@
     <div v-if="open" class="vue-modal" @click.self="close">
       <transition name="drop-in">
         <div v-if="open" class="vue-modal-inner">
-          <div class="vue-modal-content">
+          <div class="vue-modal-content" role="dialog" aria-modal="true" :aria-label="modalLabel">
             <div class="modal-header">
               <h5 class="modal-title">{{ modalLabel }}</h5>
               <button type="button" class="close" :aria-label="$t('close')" @click="close">
@@ -74,7 +74,7 @@ import TabLanguages from './TabLanguages.vue'
 import BaseInput from './BaseInput.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import CheckboxAllergens from './CheckboxAllergens.vue'
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ACCEPTED_IMAGE_TYPES, mediaUrl, uploadStructureImage } from '../media.js'
 
 const store = useStore()
@@ -187,6 +187,21 @@ const save = () => {
 const close = () => {
   emits('closeModal', null, props.index, props.action)
 }
+
+/**
+ * Escape closes the editor, as it does in every other modal here.
+ *
+ * The listener is on window rather than the backdrop: the backdrop is a plain
+ * div with no tabindex, so a keydown bound to it only ever fires when focus
+ * has already landed on something inside — which is not the case immediately
+ * after opening.
+ */
+const onKeydown = (event) => {
+  if (event.key === 'Escape' && props.open) close()
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>

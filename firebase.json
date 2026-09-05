@@ -24,6 +24,32 @@
         ]
       },
       {
+        "comment": "Security headers. The database is the authorization boundary, but that only decides who may read a row — it does nothing about what runs in the page that reads it. script-src 'self' is the one that matters: the app has no inline scripts and no runtime template compilation, so it needs neither 'unsafe-inline' nor 'unsafe-eval', and an injected <script> has nowhere to come from. connect-src is deliberately narrow: a page that can only talk to Supabase cannot post a stolen session anywhere else. style-src keeps 'unsafe-inline' because FontAwesome injects a stylesheet at runtime and Vue writes style attributes, and allows fonts.googleapis.com because the menu's typefaces are served from there. frame-ancestors denies embedding altogether; if a restaurant is ever offered an <iframe> of its own menu, that is the line to relax, and only for the menu route.",
+        "source": "**",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://*.supabase.co; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; upgrade-insecure-requests"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+          },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=31536000; includeSubDomains"
+          }
+        ]
+      },
+      {
         "comment": "Build assets carry a content hash in their filename, so they can be cached indefinitely.",
         "source": "/assets/**",
         "headers": [

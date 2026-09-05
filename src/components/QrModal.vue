@@ -1,5 +1,5 @@
 <template>
-  <div v-if="open" class="modal-backdrop" @click.self="close" @keydown.esc="close">
+  <div v-if="open" class="modal-backdrop" @click.self="close">
     <section class="qr-dialog" role="dialog" aria-modal="true" tabindex="-1" :aria-label="$t('qr_heading')">
       <header class="qr-dialog__header">
         <div>
@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useStore } from '../stores/store.js'
 
@@ -122,6 +122,21 @@ watch([() => props.open, qrLink], ([isOpen]) => {
 }, { immediate: true })
 
 const close = () => emits('close')
+
+/**
+ * Escape closes the dialog.
+ *
+ * This was bound to the backdrop with `@keydown.esc`, which never fired: the
+ * backdrop is a div with no tabindex, so it is not in the focus order and
+ * receives no key events until something inside it is focused. A window
+ * listener is what the photo lightbox already does.
+ */
+const onKeydown = (event) => {
+  if (event.key === 'Escape' && props.open) close()
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 const copyURL = async () => {
   try {

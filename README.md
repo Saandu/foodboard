@@ -14,10 +14,9 @@ Vue 3 and Supabase. Built solo in 2026.
 
 ## Screenshots
 
-| | |
-| --- | --- |
-| ![Published menu on a phone](docs/menu-mobile.png) | ![Menu editor](docs/editor.png) |
-| The published menu a diner sees | The editor, with per-language tabs |
+<img src="docs/menu-mobile.png" alt="A published menu on a phone: the restaurant's hero, category pills, prices and allergen labels" width="390">
+
+*The published menu a diner sees, opened from a QR code on the table.*
 
 ---
 

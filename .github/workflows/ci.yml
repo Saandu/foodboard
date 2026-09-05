@@ -1,0 +1,40 @@
+name: CI
+
+# The README makes claims about this project's test coverage and its lint
+# discipline. This is what backs them up on every push.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # @supabase/supabase-js needs a native WebSocket, which Node gained
+          # in 22. Keep this in step with `engines` in package.json.
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        # The RLS suite is skipped here: it signs in as two real accounts and
+        # asserts neither can read the other's rows, which needs credentials
+        # this workflow deliberately does not hold. See tests/rls.test.js.
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high

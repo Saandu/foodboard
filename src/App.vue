@@ -8,9 +8,11 @@
 </template>
 
 <script setup>
-import { computed, onBeforeMount, ref } from 'vue'
+import { computed, onBeforeMount, ref, watchEffect } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useStore } from './stores/store.js'
 import { useRoute } from 'vue-router'
+import { setBaseLanguage } from './pageMeta.js'
 import TheMainHeader from './components/TheMainHeader.vue'
 import TheMainFooter from './components/TheMainFooter.vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -54,6 +56,11 @@ onBeforeMount(async () => {
   await store.ensureSession()
   appReady.value = true
 })
+
+// Keep <html lang> on the interface locale. A published menu overrides it with
+// the language it is written in for as long as it is mounted.
+const { locale } = useI18n()
+watchEffect(() => setBaseLanguage(locale.value))
 
 
 
