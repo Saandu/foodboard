@@ -1,6 +1,7 @@
 {
   "name": "foodboard",
   "private": true,
+  "license": "UNLICENSED",
   "version": "1.0.0",
   "description": "Digital restaurant menu builder — design a menu in the admin panel, publish it to diners via link or QR code.",
   "type": "module",

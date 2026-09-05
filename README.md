@@ -309,3 +309,13 @@ Menu content in `demo-data.js` is written in a flat, readable shape — one entr
 per dish, translations grouped — and `seed.js` converts it into the JSONB the
 database expects, so editing the demo does not require understanding the
 storage format.
+
+## Copyright and permissions
+
+Copyright (c) 2026 Alexandru Lungu. All rights reserved.
+
+The source is public for portfolio review; this is not an open-source project.
+Reuse, modification and redistribution require prior written permission,
+except where applicable law or GitHub's Terms of Service permit otherwise.
+Third-party dependencies and materials retain their own licenses.
+See [LICENSE](LICENSE) for the full notice and permission requests.
