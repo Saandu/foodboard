@@ -8,21 +8,15 @@ is the work still outstanding.
 
 ## Product gaps
 
-### A shared demo account
+### A visitor's uploads outlive their visit
 
-Reviewers will not sign up to look around. A shared, read-only demo login would
-open the real dashboard in one click. The interface strings already exist
-(`demo_access`, `demo_access_text`, `demo_enter`, `or_log_in_manually`) and are
-currently wired to nothing.
-
-It needs `VITE_DEMO_EMAIL` and `VITE_DEMO_PASSWORD`, both inlined into the
-browser bundle — which is fine and intended, since the point is that anyone may
-use them, but it means the account has to be treated as hostile territory:
-
-- make it the showcase owner (`SHOWCASE_USER_ID`), or the demo dashboard opens
-  on an empty workspace
-- hide "Delete account" for it
-- decide what a visitor's uploads should do — see the reset question below
+The shared demo account is live (`demo@foodboard.app`, see the
+[README](README.md)) and the nightly reset rebuilds its rows, but a visitor who
+uploads an image leaves the object behind in Storage: the seed rewrites
+`structures` and `products`, and nothing sweeps the bucket. It is the account
+deletion problem in miniature — see *Abandoned uploads* in the README's known
+limitations. A reset that also deleted every object under the demo user's
+folder that no row references would close both.
 
 ### Menus are invisible to search
 

@@ -83,6 +83,9 @@ export const useStore = defineStore('store', {
 
     user: {
       user_id: '',
+      // Not a column on public.users — it comes from the auth session, and
+      // only so the demo account can be recognised. See src/demo.js.
+      email: '',
       name: '',
       surname: '',
       settings: defaultSettings()
@@ -170,10 +173,12 @@ export const useStore = defineStore('store', {
         this.user = row
           ? {
             ...row,
+            email: authUser.email ?? '',
             settings: Object.keys(row.settings || {}).length ? row.settings : defaultSettings()
           }
           : {
             user_id: authUser.id,
+            email: authUser.email ?? '',
             name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'FoodBoard user',
             surname: '',
             settings: defaultSettings()

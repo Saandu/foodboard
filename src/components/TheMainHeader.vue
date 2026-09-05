@@ -10,7 +10,7 @@
             <strong>{{ store.user.name }} {{ store.user.surname }}</strong><span>{{ $t('greeting') }}</span>
             <button type="button" @click="backToStructures">{{ $t('profile_link') }}</button>
             <button type="button" class="account-menu__logout" @click="handleLogout">{{ $t('logout') }}</button>
-            <button type="button" class="account-menu__delete" @click="openDeleteAccount">{{ $t('delete_account') }}</button>
+            <button v-if="!isDemo" type="button" class="account-menu__delete" @click="openDeleteAccount">{{ $t('delete_account') }}</button>
           </div>
         </details>
       </div>
@@ -20,16 +20,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from '../stores/store.js'
 import { supabase } from '../supabase.js'
 import LanguagePicker from './LanguagePicker.vue'
 import DeleteAccountModal from './DeleteAccountModal.vue'
 import { UI_LANGUAGES } from '../uiLanguages.js'
+import { isDemoUser } from '../demo.js'
 const store = useStore()
 const router = useRouter()
 const languageOptions = UI_LANGUAGES
+// The demo account is shared, so any visitor could otherwise delete the
+// showcase out from under everyone else. Hiding the control is the whole
+// guard the client can offer; delete_account() itself is caller-scoped and
+// would happily obey.
+const isDemo = computed(() => isDemoUser(store.user.email))
 const deleteAccountOpen = ref(false)
 // Close the dropdown first, or it stays open behind the modal.
 const openDeleteAccount = (event) => {
