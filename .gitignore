@@ -35,3 +35,6 @@ skills-lock.json
 
 # Firebase deploy cache
 .firebase/
+
+# Session working notes, not part of the published project
+HANDOFF.md
