@@ -143,7 +143,7 @@ the share dialog.
 | CI/CD | GitHub Actions, Firebase Hosting |
 | Tooling | ESLint (flat config) + `@stylistic`, `sharp` for build-time images |
 
-Roughly 9,800 lines across 72 source, script, test and migration files.
+Roughly 9,700 lines across 71 source, script, test and migration files.
 Six tables, 25 RLS policies, seven functions, seven triggers, eight migrations.
 
 ### Layout

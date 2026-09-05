@@ -60,7 +60,7 @@ Menus can be duplicated. Categories and dishes only offer edit and delete.
 ### More interface locales
 
 Menus can be published in nine languages; the interface itself is translated
-into three (`src/uiLanguages.js`, `src/locales/`). 206 keys, all in sync.
+into three (`src/uiLanguages.js`, `src/locales/`). 196 keys, all in sync.
 
 ---
 
