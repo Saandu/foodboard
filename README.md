@@ -8,6 +8,20 @@ it to diners as a link or a QR code on the table.
 · Menus: [Trattoria Mareluna](https://foodboard-demo.web.app/menu/trattoria-mareluna)
 · [Caffè Mareluna](https://foodboard-demo.web.app/menu/caffe-mareluna)
 
+**Try the dashboard** — [sign in](https://foodboard-demo.web.app/login) and press
+**Enter demo**, or use the credentials directly:
+
+| | |
+| --- | --- |
+| Email | `demo@foodboard.app` |
+| Password | `xh7aVfNG23aso04Oi42jV_bZ` |
+
+These are published deliberately. The account owns nothing but the two showcase
+restaurants, account deletion is hidden for it, and [a nightly
+workflow](.github/workflows/reset-demo.yml) reseeds the workspace — so edit
+anything you like. To keep your own menu instead, register normally; workspaces
+are isolated in Postgres, not in the client (see below).
+
 Vue 3 and Supabase. Built solo in 2026.
 
 ---
