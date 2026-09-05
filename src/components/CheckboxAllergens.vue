@@ -19,7 +19,9 @@ import { useStore } from '../stores/store.js'
 
 const emits = defineEmits(['updateAllergens'])
 defineProps({
+  /** Allergen ids currently ticked for this record. */
   allergens: {
+    type: Array,
     required: true
   }
 })

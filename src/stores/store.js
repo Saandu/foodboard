@@ -577,7 +577,9 @@ export const useStore = defineStore('store', {
         await insertFeedback({ userId: this.user.user_id, subject, message, attachment })
       } catch (error) {
         console.error(error)
-        throw new Error('feedback_failed')
+        // The message is a translation key for the modal; the original error
+        // travels as `cause` so it is still there when debugging.
+        throw new Error('feedback_failed', { cause: error })
       }
     }
   }

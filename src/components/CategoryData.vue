@@ -11,7 +11,18 @@
     </header>
     <div class="products-heading"><span>{{ $t('product_name') }}</span><span>{{ $t('status') }}</span></div>
     <div class="products-list">
-      <ProductShortData v-if="isListProductsLoaded" v-for="(product, index) in products" :key="`${product.name}-${index}`" :type="product.type" :product="product" :name="product.name" :index="index" @toggle-active="toggleProductActive(index)" @edit-product="editProduct(index, product.type)" @duplicate-product="duplicateProduct(index)" @delete-product="deleteProduct(index)" />
+      <!-- v-if on a <template> wrapper rather than beside the v-for: on one
+           element v-for wins and the condition is re-tested per row. The loop
+           variable is not named `index` because this component already takes an
+           `index` prop of its own. -->
+      <template v-if="isListProductsLoaded">
+        <ProductShortData v-for="(product, rowIndex) in products" :key="`${product.name}-${rowIndex}`"
+                          :type="product.type" :product="product" :name="product.name" :index="rowIndex"
+                          @toggle-active="toggleProductActive(rowIndex)"
+                          @edit-product="editProduct(rowIndex, product.type)"
+                          @duplicate-product="duplicateProduct(rowIndex)"
+                          @delete-product="deleteProduct(rowIndex)" />
+      </template>
     </div>
     <div class="category-editor__footer">
       <button type="button" class="btn btn-quiet" @click="addProduct(-1)">{{ products.length ? $t('add_product') : $t('create_first_product') }}</button>
@@ -44,14 +55,20 @@ const props = defineProps({
     type: String,
     required: true
   },
+  // Named for the column it mirrors rather than camelCased, so the descriptor
+  // and the prop read the same in both places.
+  // eslint-disable-next-line vue/prop-name-casing
   category_id: {
+    type: String,
     required: true
   },
   index: {
+    type: Number,
     required: true
   },
   display: {
-    type: String
+    type: String,
+    default: ''
   }
 })
 

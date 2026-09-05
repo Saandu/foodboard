@@ -21,26 +21,27 @@
     "seed": "node scripts/seed.js",
     "migrate:images": "node scripts/migrate-images.js"
   },
-  "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "6.3.0",
-    "@fortawesome/free-solid-svg-icons": "6.3.0",
-    "@fortawesome/vue-fontawesome": "3.0.3",
-    "@supabase/supabase-js": "^2.112.3",
-    "@vueuse/core": "9.13.0",
-    "pinia": "2.0.30",
-    "qrcode": "^1.5.4",
-    "vue": "3.2.47",
-    "vue-i18n": "^9.14.5",
-    "vue-router": "4.1.6"
-  },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "@vitejs/plugin-vue": "4.0.0",
-    "eslint": "^9.39.5",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "eslint": "^10.10.0",
     "eslint-plugin-vue": "^10.10.0",
     "globals": "^17.12.0",
-    "sharp": "^0.35.3",
-    "vite": "4.1.1",
-    "vitest": "^4.1.10"
+    "sharp": "^0.35.4",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.3.1",
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@fortawesome/vue-fontawesome": "^3.3.3",
+    "@supabase/supabase-js": "^2.115.0",
+    "@vueuse/core": "^14.4.0",
+    "pinia": "^4.0.3",
+    "qrcode": "^1.5.4",
+    "vue": "^3.5.42",
+    "vue-i18n": "^11.4.10",
+    "vue-router": "^5.3.1"
   }
 }

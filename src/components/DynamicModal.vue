@@ -11,7 +11,7 @@
               </button>
             </div>
             <div class="modal-body">
-              <div v-for="block in modalData">
+              <div v-for="(block, blockIndex) in modalData" :key="blockIndex">
                 <BaseInput v-if="block.type !== 'tabs' && block.type !== 'allergens' && block.type !== 'file'"
                            :label="fieldLabel(block.label)" :type="block.type" v-model="block.value" />
                 <TabLanguages v-if="block.type === 'tabs'" :tabs-data="block.tabs" @add-price="addPrice"
@@ -89,10 +89,14 @@ const props = defineProps({
   },
   index: {
     type: Number,
-    required: false
+    required: false,
+    default: null
   },
+  /** The record's form descriptor: one block per editable field. */
   modalData: {
-    required: false
+    type: Array,
+    required: false,
+    default: () => []
   },
   modalLabel: {
     type: String,
@@ -103,7 +107,8 @@ const props = defineProps({
     required: true
   },
   type: {
-    type: String
+    type: String,
+    default: ''
   }
 })
 

@@ -1,9 +1,9 @@
 <template>
   <div class="tab-languages">
   <div class="input-field">
-    <div v-for="tab in editableTabs">
+    <div v-for="(tab, tabIndex) in editableTabs" :key="tabIndex">
       <div v-if="tab[0].tabLabel === selectedTabId">
-        <div v-for="input in tab">
+        <div v-for="(input, inputIndex) in tab" :key="inputIndex">
           <BaseInput
               v-if="!input.tabLabel && input.type !== 'file' && input.type !== 'prices' && input.type !== 'description_rows'"
               v-model="input.value"
@@ -36,7 +36,7 @@
             <div class="prices">
               <div class="div">
                 <p class="input-label">{{ $t('price') }}</p>
-                <div v-for="price in input.value">
+                <div v-for="(price, priceIndex) in input.value" :key="priceIndex">
                   <div class="flex align-center">
                     <div class="currency-label">{{ store.selectedStructure.structure.currency }}</div>
                     <BaseInput :disabled="tab[0].tabLabel !== store.selectedStructure.structure.language_main"
@@ -47,7 +47,7 @@
               </div>
               <div class="div">
                 <p class="input-label">{{ $t('suffix_optional') }}</p>
-                <div v-for="(price, index) in input.value">
+                <div v-for="(price, index) in input.value" :key="index">
                   <div class="flex align-center">
                     <BaseInput :label="$t('price')" type="text" v-model="price.suffix" />
                     <p v-if="index !== 0 && tab[0].tabLabel === store.selectedStructure.structure.language_main"
@@ -69,7 +69,7 @@
           <div v-if="input.type === 'description_rows'">
             <div class="div">
               <p class="input-label">{{ $t('short_description') }}</p>
-              <div v-for="(description, index) in input.value">
+              <div v-for="(description, index) in input.value" :key="index">
                 <div class="">
                   <BaseInput type="text" v-model="description.value" />
                   <p v-if="index !== 0 && tab[0].tabLabel === store.selectedStructure.structure.language_main"
@@ -132,7 +132,9 @@ const fieldLabel = (label) => translateFieldLabel(label, t)
 
 const emits = defineEmits(['handleTabUpdates', 'addPrice', 'removePrice', 'addDescription', 'removeDescription', 'toggleMainTabInputs'])
 const props = defineProps({
+  /** One entry per language tab; each is an array of field definitions. */
   tabsData: {
+    type: Array,
     required: true
   }
 })
