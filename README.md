@@ -142,7 +142,7 @@ the share dialog.
 | CI/CD | GitHub Actions, Firebase Hosting |
 | Tooling | ESLint (flat config) + `@stylistic`, `sharp` for build-time images |
 
-Roughly 9,700 lines across 71 source, script, test and migration files.
+Roughly 9,000 lines across 69 source, script, test and migration files.
 Six tables, 25 RLS policies, seven functions, seven triggers, eight migrations.
 
 ### Layout
@@ -165,7 +165,7 @@ tests/            Vitest suites
 
 ## Testing
 
-`npm test` — **88 passing**, plus 9 that are opt-in.
+`npm test` — **92 passing**, plus 9 that are opt-in.
 
 | Suite | Covers |
 | --- | --- |
@@ -174,7 +174,7 @@ tests/            Vitest suites
 | `tests/shapes.test.js` | the JSONB descriptor builders used by the seed |
 | `tests/menuTranslations.test.js` | translation lookup and fallback rules |
 | `tests/media.test.js` | image URL resolution and resize arithmetic |
-| `tests/pageMeta.test.js` | per-menu title and description |
+| `tests/pageMeta.test.js` | per-menu title and description, and `<html lang>` |
 | `tests/qr.test.js` | local QR generation |
 | `tests/rls.test.js` | **opt-in** — cross-account isolation, against a real database |
 
