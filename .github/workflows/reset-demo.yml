@@ -4,8 +4,16 @@ name: Reset demo data
 
 on:
   schedule:
-    # Every day at 04:00 UTC.
-    - cron: '0 4 * * *'
+    # Every three hours across the working day, plus one overnight run.
+    #
+    # The credentials are published, so the demo is defaced-until-reset rather
+    # than defaced-until-noticed, and a daily reset meant a visitor's mess could
+    # sit there for 23 hours — plausibly the hour a reviewer opens the link.
+    #
+    # GitHub only schedules in UTC. These are 09:00, 12:00, 15:00, 18:00 and
+    # 00:00 Romanian time while EEST (UTC+3) is in force; they drift an hour
+    # later in local terms when the country falls back to EET in October.
+    - cron: '0 6,9,12,15,21 * * *'
   # Allows a manual reset from the Actions tab.
   workflow_dispatch:
 

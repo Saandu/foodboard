@@ -10,28 +10,13 @@ is the work still outstanding.
 
 ### A visitor's uploads outlive their visit
 
-The shared demo account is live (`demo@foodboard.app`, see the
-[README](README.md)) and the nightly reset rebuilds its rows, but a visitor who
-uploads an image leaves the object behind in Storage: the seed rewrites
-`structures` and `products`, and nothing sweeps the bucket. It is the account
-deletion problem in miniature — see *Abandoned uploads* in the README's known
-limitations. A reset that also deleted every object under the demo user's
-folder that no row references would close both.
-
-### Menus are invisible to search
-
-No `sitemap.xml`, no `robots.txt`, no structured data. A restaurant's menu is
-exactly what people search for by name, so [schema.org/Menu](https://schema.org/Menu)
-JSON-LD and a generated sitemap would be a real feature rather than polish.
-
-### Link previews need prerendering
-
-Published menus set their own `title`, `description` and `og:` tags at runtime,
-which fixes browser tabs, bookmarks and Google. WhatsApp, Facebook, LinkedIn
-and Slack do not execute JavaScript, so a shared menu link still previews with
-the generic site tags. Since sharing a menu link *is* the product, this wants a
-small edge function that intercepts `/menu/:slug`, calls `get_public_menu`, and
-returns HTML carrying the restaurant's own tags.
+The reset now restores the *rows* — `scripts/demo-media.json` puts the right
+image back on every dish every three hours — but the object a visitor uploaded
+stays in Storage, referenced by nothing. Nothing sweeps the bucket, so the demo
+accumulates dead bytes at whatever rate people try the editor, and uploads are
+otherwise unmetered: 5 MB an image, no per-account quota. A reset that also
+deleted every object under the demo user's folder that no row references would
+close both this and *Abandoned uploads* in the README.
 
 ### Expiring or password-protected menus
 
@@ -60,17 +45,6 @@ into three (`src/uiLanguages.js`, `src/locales/`). 196 keys, all in sync.
 
 ## Open questions
 
-### What should the nightly reset protect?
-
-The reset carries logos and dish photos across the wipe, so it does not erase
-uploads made through the dashboard. That is right while a single person edits
-the showcase.
-
-A shared demo account inverts it: a visitor's uploads would survive nightly on
-a public site. At that point the demo content wants to be fully declarative in
-`demo-data.js` and everything else wiped. Until then the schedule is arguably
-pointless, since the only work it undoes belongs to the showcase owner.
-
 ### Demo slugs are pinned
 
 Rotating a demo restaurant's link works, but `demo-data.js` pins
@@ -98,16 +72,6 @@ Roughly the order a paying customer would hit them.
 ---
 
 ## Quality
-
-### No component tests
-
-`npm test` covers the pure logic, the descriptor builders and the data-access
-layer — 88 passing, plus 9 opt-in. No Vue component is mounted in a test. That
-is the largest gap in coverage.
-
-The opt-in suite is `tests/rls.test.js`, which needs `RLS_TEST_A_*` and
-`RLS_TEST_B_*` set to two confirmed throwaway accounts. It is the one suite
-that proves the security model rather than assuming it.
 
 ### The JSONB form-descriptor model
 

@@ -49,5 +49,10 @@ export default defineConfig({
     rollupOptions: {
       output: { manualChunks }
     }
+  },
+  test: {
+    // Most of the suite is pure logic and runs faster without a DOM. The
+    // component tests opt themselves in with `@vitest-environment happy-dom`.
+    environment: 'node'
   }
 })
