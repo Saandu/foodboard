@@ -147,3 +147,38 @@ describe.skipIf(!configured)('RLS keeps workspaces private', () => {
     expect(data).toBeNull()
   })
 })
+
+/**
+ * The shared demo account may not delete itself.
+ *
+ * Hiding the button in the header is presentation; this is the guard. The
+ * credentials are published, so "only the owner may delete the owner" no
+ * longer restrains anyone — every visitor is the owner. Runs against the real
+ * project whenever the demo is configured, and calls the RPC for real: if the
+ * protection regresses, this test deletes the showcase and says so loudly.
+ */
+const demo = { email: process.env.VITE_DEMO_EMAIL, password: process.env.VITE_DEMO_PASSWORD }
+const demoConfigured = Boolean(url && publishableKey && demo.email && demo.password)
+
+describe.skipIf(!demoConfigured)('the shared demo account is protected', () => {
+  it('refuses delete_account() and survives the attempt', async () => {
+    const { client, userId } = await signIn(demo)
+
+    const { error } = await client.rpc('delete_account')
+    expect(error, 'delete_account() must refuse the demo account').not.toBeNull()
+    expect(error.message).toMatch(/protected/i)
+
+    const { data } = await client.auth.getUser()
+    expect(data.user?.id, 'the demo account must still exist').toBe(userId)
+  })
+
+  it('cannot read or clear the table that holds the rule', async () => {
+    const { client } = await signIn(demo)
+
+    const { error: readError } = await client.from('protected_accounts').select('*')
+    expect(readError?.code, 'protected_accounts must not be readable').toBe('42501')
+
+    const { error: writeError } = await client.from('protected_accounts').delete().neq('user_id', '')
+    expect(writeError?.code, 'protected_accounts must not be writable').toBe('42501')
+  })
+})
