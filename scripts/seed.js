@@ -16,6 +16,9 @@
  * placeholder owner and your dashboard shows an empty workspace.
  */
 
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { demoUser, demoStructures } from './demo-data.js'
 import { loadEnv, requireServiceCredentials } from './env.js'
@@ -51,6 +54,46 @@ const ownedByRealAccount = showcaseUserId !== demoUser.user_id
 const supabase = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false }
 })
+
+/**
+ * Snapshot of the branding and dish photos the showcase is supposed to have.
+ *
+ * Written by `npm run seed -- --capture-media` while the demo looks right, and
+ * preferred over whatever is in the database on every later run. Without it a
+ * reset carries the *current* images over — which was correct while one person
+ * owned the showcase, and stopped being correct the day the credentials were
+ * published: a visitor who swaps a dish photo for something unpleasant would
+ * otherwise have it carried forward for good.
+ */
+const MEDIA_MANIFEST = join(dirname(fileURLToPath(import.meta.url)), 'demo-media.json')
+const captureMedia = process.argv.includes('--capture-media')
+
+const readManifest = () => {
+  if (!existsSync(MEDIA_MANIFEST)) return null
+  try {
+    return JSON.parse(readFileSync(MEDIA_MANIFEST, 'utf8'))
+  } catch (error) {
+    console.warn(`Ignoring unreadable ${MEDIA_MANIFEST}: ${error.message}`)
+    return null
+  }
+}
+
+/**
+ * Marks the showcase account undeletable.
+ *
+ * delete_account() reads this table; see migration 20260906000000. The seed is
+ * where it belongs rather than in the migration itself, because *which* id is
+ * the showcase is deployment configuration, not schema.
+ */
+async function ensureProtected () {
+  if (!ownedByRealAccount) return
+  const { error } = await supabase.from('protected_accounts').upsert({
+    user_id: showcaseUserId,
+    reason: 'shared demo account: credentials are published in the README'
+  }, { onConflict: 'user_id' })
+  if (error) throw new Error(`Failed protecting the showcase account: ${error.message}`)
+  console.log('  showcase account marked undeletable')
+}
 
 /* ------------------------------------------------------------------ *
  * Wipe and insert
@@ -269,8 +312,35 @@ function buildRows (existingImages = new Map()) {
 
 async function main () {
   // Read before the wipe, or the images are gone by the time we rebuild.
-  const existingImages = await readExistingImages()
-  const existingPhotos = await readExistingPhotos()
+  const liveImages = await readExistingImages()
+  const livePhotos = await readExistingPhotos()
+
+  if (captureMedia) {
+    const snapshot = {
+      captured: new Date().toISOString().slice(0, 10),
+      logos: Object.fromEntries([...liveImages].map(([id, value]) => [id, value.logo])),
+      photos: Object.fromEntries(livePhotos)
+    }
+    writeFileSync(MEDIA_MANIFEST, `${JSON.stringify(snapshot, null, 2)}
+`)
+    console.log(
+      `Captured ${Object.keys(snapshot.logos).length} logo(s) and ` +
+      `${Object.keys(snapshot.photos).length} dish photo(s) to ${MEDIA_MANIFEST}.
+` +
+      'Nothing was written to the database.'
+    )
+    return
+  }
+
+  // The manifest wins where it has an answer: a reset should restore the
+  // showcase, not preserve whatever the last visitor left behind.
+  const manifest = readManifest()
+  const existingImages = manifest
+    ? new Map(Object.entries(manifest.logos || {}).map(([id, logo]) => [id, { logo }]))
+    : liveImages
+  const existingPhotos = manifest ? new Map(Object.entries(manifest.photos || {})) : livePhotos
+  if (manifest) console.log(`Restoring media from ${MEDIA_MANIFEST} (captured ${manifest.captured}).`)
+
   const { users, structures, lists, categories, products } = buildRows(existingImages)
 
   const carried = structures.filter(row => row.structure.logo).length
@@ -290,6 +360,7 @@ async function main () {
   await wipe()
 
   console.log('Seeding demo content...')
+  await ensureProtected()
   await insert('users', users)
   await insert('structures', structures)
   await insert('lists', lists)

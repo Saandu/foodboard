@@ -59,12 +59,24 @@ export const MAX_SOURCE_BYTES = 25 * 1024 * 1024
  * than one compromise number.
  */
 export const IMAGE_PRESETS = {
-  logo: { maxEdge: 800, quality: 0.85 },
-  dish: { maxEdge: 1200, quality: 0.82 },
-  category: { maxEdge: 1200, quality: 0.82 }
+  logo: { maxEdge: 800, quality: 0.85, targetBytes: 120 * 1024 },
+  dish: { maxEdge: 1200, quality: 0.82, targetBytes: 220 * 1024 },
+  category: { maxEdge: 1200, quality: 0.82, targetBytes: 220 * 1024 }
 }
 
-const DEFAULT_PRESET = { maxEdge: 1200, quality: 0.82 }
+const DEFAULT_PRESET = { maxEdge: 1200, quality: 0.82, targetBytes: 220 * 1024 }
+
+/**
+ * Quality steps tried when the first encode lands over the preset's target.
+ *
+ * A busy photograph at q0.82 can still be most of a megabyte, and that is the
+ * file every diner then downloads on restaurant wifi. Dropping quality is
+ * cheap — the image is already scaled to at most `maxEdge`, so the artefacts
+ * land well below the size it is displayed at. The floor is deliberate: past
+ * roughly q0.55 WebP starts smearing text on a logo.
+ */
+const QUALITY_STEPS = [0, -0.12, -0.25]
+const MIN_QUALITY = 0.55
 
 /**
  * Scales an image down to fit inside `maxEdge`, preserving aspect ratio.
@@ -114,14 +126,24 @@ export const compressImage = async (file, presetName) => {
     canvas.height = height
     canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height)
 
-    const blob = await canvasToBlob(canvas, 'image/webp', preset.quality)
-    // Safari used to ignore the requested type and hand back a PNG.
-    if (!blob || blob.type !== 'image/webp') return file
+    const target = preset.targetBytes || DEFAULT_PRESET.targetBytes
+    let best = null
+
+    for (const step of QUALITY_STEPS) {
+      const quality = Math.max(MIN_QUALITY, preset.quality + step)
+      const blob = await canvasToBlob(canvas, 'image/webp', quality)
+      // Safari used to ignore the requested type and hand back a PNG. Nothing
+      // about a lower quality would change that, so give up on the whole ladder.
+      if (!blob || blob.type !== 'image/webp') return file
+      if (!best || blob.size < best.size) best = blob
+      if (blob.size <= target) break
+    }
+
     // Re-encoding a small, already-efficient image can make it bigger.
-    if (blob.size >= file.size) return file
+    if (!best || best.size >= file.size) return file
 
     const name = file.name.replace(/\.[^.]+$/, '') + '.webp'
-    return new File([blob], name, { type: 'image/webp' })
+    return new File([best], name, { type: 'image/webp' })
   } catch (err) {
     console.error('Could not convert the image, uploading it unchanged:', err)
     return file
