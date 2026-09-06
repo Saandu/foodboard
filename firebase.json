@@ -1,6 +1,8 @@
 {
   "hosting": {
     "public": "dist",
+    "comment": "cleanUrls serves the prerendered dist/menu/<slug>.html at /menu/<slug> with no redirect. Without it Hosting only matches a directory index, and /menu/<slug> would 301 to a trailing slash that neither the printed QR codes nor vue-router's /menu/:slug route use.",
+    "cleanUrls": true,
     "ignore": [
       "firebase.json",
       "**/.*",

@@ -94,12 +94,16 @@ async function main () {
     }, origin)
 
     if (!dryRun) {
-      const dir = join(dist, 'menu', row.public_slug)
-      mkdirSync(dir, { recursive: true })
-      writeFileSync(join(dir, 'index.html'), html)
+      // <slug>.html rather than <slug>/index.html. Hosting answers a directory
+      // request without its trailing slash with a 301, and the app's routes —
+      // and every printed QR code — are the slashless form. With cleanUrls on,
+      // this shape serves /menu/<slug> directly, at the URL people actually
+      // hold, and vue-router sees the path its route was written for.
+      mkdirSync(join(dist, 'menu'), { recursive: true })
+      writeFileSync(join(dist, 'menu', `${row.public_slug}.html`), html)
     }
     written.push(row.public_slug)
-    console.log(`  ${dryRun ? 'would write' : 'wrote'} menu/${row.public_slug}/index.html — "${title}"`)
+    console.log(`  ${dryRun ? 'would write' : 'wrote'} menu/${row.public_slug}.html — "${title}"`)
   }
 
   if (!dryRun) writeFileSync(join(dist, 'sitemap.xml'), sitemap(written, origin))
