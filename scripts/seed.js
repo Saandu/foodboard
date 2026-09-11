@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { demoUser, demoStructures } from './demo-data.js'
 import { loadEnv, requireServiceCredentials } from './env.js'
+import { request } from './retry.js'
 import {
   LANGS,
   blankCategoryModal,
@@ -87,10 +88,11 @@ const readManifest = () => {
  */
 async function ensureProtected () {
   if (!ownedByRealAccount) return
-  const { error } = await supabase.from('protected_accounts').upsert({
-    user_id: showcaseUserId,
-    reason: 'shared demo account: credentials are published in the README'
-  }, { onConflict: 'user_id' })
+  const { error } = await request('protect showcase account', () =>
+    supabase.from('protected_accounts').upsert({
+      user_id: showcaseUserId,
+      reason: 'shared demo account: credentials are published in the README'
+    }, { onConflict: 'user_id' }))
   if (error) throw new Error(`Failed protecting the showcase account: ${error.message}`)
   console.log('  showcase account marked undeletable')
 }
@@ -117,7 +119,8 @@ async function wipe () {
   }
 
   for (const [table, column, values] of deletes) {
-    const { error } = await supabase.from(table).delete().in(column, values)
+    const { error } = await request(`clear ${table}`, () =>
+      supabase.from(table).delete().in(column, values))
     if (error) throw new Error(`Failed clearing demo ${table}: ${error.message}`)
     console.log(`  cleared demo ${table}`)
   }
@@ -134,8 +137,8 @@ async function wipe () {
  */
 async function readExistingImages () {
   const structureIds = demoStructures.map(structure => structure.structure_id)
-  const { data, error } = await supabase
-    .from('structures').select('structure_id, structure').in('structure_id', structureIds)
+  const { data, error } = await request('read structures', () =>
+    supabase.from('structures').select('structure_id, structure').in('structure_id', structureIds))
 
   if (error) throw new Error(`Failed reading existing images: ${error.message}`)
 
@@ -162,7 +165,8 @@ async function readExistingImages () {
  * whatever a visitor uploaded. See ROADMAP.md.
  */
 async function readExistingPhotos () {
-  const { data, error } = await supabase.from('products').select('product_id, product')
+  const { data, error } = await request('read products', () =>
+    supabase.from('products').select('product_id, product'))
   if (error) throw new Error(`Failed reading existing photos: ${error.message}`)
 
   const photos = new Map()
@@ -194,7 +198,8 @@ function applyPhotos (productRows, photos) {
 
 async function insert (table, rows) {
   if (!rows.length) return
-  const { error } = await supabase.from(table).insert(rows)
+  const { error } = await request(`insert ${table}`, () =>
+    supabase.from(table).insert(rows))
   if (error) throw new Error(`Failed inserting into ${table}: ${error.message}`)
   console.log(`  inserted ${rows.length} into ${table}`)
 }
