@@ -3,14 +3,14 @@
 [![CI](https://github.com/Saandu/foodboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Saandu/foodboard/actions/workflows/ci.yml)
 
 A multi-tenant digital menu builder: a restaurant owner designs a menu in the
-dashboard — categories, dishes, prices, allergens, translations — and publishes
+dashboard - categories, dishes, prices, allergens, translations - and publishes
 it to diners as a link or a QR code on the table.
 
 **Live demo: [foodboard-demo.web.app](https://foodboard-demo.web.app)**
 · Menus: [Trattoria Mareluna](https://foodboard-demo.web.app/menu/trattoria-mareluna)
 · [Caffè Mareluna](https://foodboard-demo.web.app/menu/caffe-mareluna)
 
-**Try the dashboard** — [sign in](https://foodboard-demo.web.app/login) and press
+**Try the dashboard** - [sign in](https://foodboard-demo.web.app/login) and press
 **Enter demo**, or use the credentials directly:
 
 | | |
@@ -21,7 +21,7 @@ it to diners as a link or a QR code on the table.
 These are published deliberately. The account owns nothing but the two showcase
 restaurants, `delete_account()` **refuses** it in Postgres rather than merely
 hiding the button, and [a workflow](.github/workflows/reset-demo.yml) reseeds
-the workspace every three hours — so edit anything you like. To keep your own
+the workspace every three hours - so edit anything you like. To keep your own
 menu instead, register normally; workspaces are isolated in Postgres, not in
 the client (see below).
 
@@ -51,7 +51,7 @@ This is the decision the rest of the project hangs off.
 
 The obvious way to build a multi-tenant dashboard is to filter by owner in the
 client: `select * from structures where user_id = currentUser.id`. That works
-until the day a query is written without the filter — and then it returns
+until the day a query is written without the filter - and then it returns
 everybody's rows, silently, with no error to notice.
 
 Instead, `anon` is revoked from every table, `authenticated` holds only
@@ -60,7 +60,7 @@ Instead, `anon` is revoked from every table, `authenticated` holds only
 a cross-tenant query, because the database will not answer one.
 
 That inverts the failure mode, which is the whole point. A client bug can now
-only fail to fetch **my own** data — a visibly broken page — where before it
+only fail to fetch **my own** data - a visibly broken page - where before it
 could have leaked **someone else's**. One failure is a bug report; the other is
 an incident.
 
@@ -78,11 +78,11 @@ Two smaller choices follow from the same reasoning:
 - Policies use `(select auth.uid())` rather than a bare `auth.uid()`. The
   subquery form is evaluated once per statement instead of once per row.
 - `rotate_public_slug` is deliberately `security invoker`, not `security
-  definer`. It needs no elevation — the existing policy is what stops one
+  definer`. It needs no elevation - the existing policy is what stops one
   account rotating another's link, so making it `definer` would have added
   privilege for nothing.
 
-The alternative — filtering in the client — costs nothing to write and
+The alternative - filtering in the client - costs nothing to write and
 everything to get wrong once. Enforcing it in the database costs a migration
 and the discipline of adding a policy per table.
 
@@ -100,9 +100,9 @@ logos at 800px.
 
 Quality is not a single number, because one is always wrong for some picture. A
 flat logo is tiny at q0.85 while a busy plate of food at the same setting can
-still be most of a megabyte — and that is the file every diner then downloads on
+still be most of a megabyte - and that is the file every diner then downloads on
 restaurant wifi. Each preset carries a **target size** (120 KB for a logo,
-220 KB for a dish) and the encoder steps quality down — 0.82, 0.70, 0.57 — until
+220 KB for a dish) and the encoder steps quality down - 0.82, 0.70, 0.57 - until
 it gets under, keeping the smallest attempt if it never does. The floor is
 deliberate: past roughly q0.55, WebP starts smearing text on a logo. Two sizes
 are enforced as hard limits either way: 25 MB on what may be chosen at all, and
@@ -122,16 +122,16 @@ the original first. Doing it client-side means the bytes are never sent at all.
 ### Link previews are prerendered, because scrapers do not run JavaScript
 
 The app sets each menu's title, description and `og:` tags at runtime, which is
-enough for browser tabs, bookmarks and Google — Googlebot renders JavaScript.
+enough for browser tabs, bookmarks and Google - Googlebot renders JavaScript.
 WhatsApp, Facebook, LinkedIn and Slack do not. They fetch the URL once, read
 the markup as served, and show whatever `index.html` said. Every restaurant in
 the product therefore previewed as the same generic FoodBoard card, on the one
 surface where the product is actually shared.
 
 `scripts/prerender-menus.mjs` runs after `vite build`. For each published menu
-it writes `dist/menu/<slug>/index.html` — the built `index.html` with its head
+it writes `dist/menu/<slug>/index.html` - the built `index.html` with its head
 rewritten to the restaurant's own name, blurb, logo and language, plus a
-`schema.org/Menu` block and a canonical link — and a `sitemap.xml` listing them.
+`schema.org/Menu` block and a canonical link - and a `sitemap.xml` listing them.
 Firebase Hosting serves a matching static file before it consults the SPA
 rewrite, so those files win for their own routes and the rewrite still catches
 everything else. The script tags are untouched, so the page still boots into
@@ -152,8 +152,8 @@ Three details that are easy to get wrong:
   nothing is worse than the generic card.
 
 The honest cost is staleness: a menu published after the last deploy previews
-generically until the next one. The alternative that has no staleness — an edge
-function intercepting `/menu/:slug` — needs Cloud Run under Firebase Hosting,
+generically until the next one. The alternative that has no staleness - an edge
+function intercepting `/menu/:slug` - needs Cloud Run under Firebase Hosting,
 which is real infrastructure and real money for a portfolio deployment. A
 deploy-time snapshot buys the whole visible benefit at none of that cost.
 
@@ -161,14 +161,14 @@ deploy-time snapshot buys the whole visible benefit at none of that cost.
 
 Menus were originally served at `/menu/<structure_id>`. Two problems: the demo
 ids were `111` and `222`, so the address space was trivially guessable, and a
-link could never be withdrawn — the address *was* the row's identity.
+link could never be withdrawn - the address *was* the row's identity.
 
 Each restaurant now carries a random `public_slug` with a unique index, and
 `get_public_menu` looks up by slug. An owner who has printed a QR code onto a
 menu card and later needs to kill that link can rotate it.
 
 The migration deliberately drops the id-based lookup rather than keeping it as
-a fallback. Leaving it in place would have meant rotation revoked nothing — the
+a fallback. Leaving it in place would have meant rotation revoked nothing - the
 old address would still resolve, and the feature would be theatre.
 
 ### Session bootstrap belongs to the router, not to a component
@@ -179,7 +179,7 @@ where there is no session to load.
 
 The result was a bug that looked cosmetic and was structural: arriving at `/`
 while already signed in left the store empty, and navigating into the dashboard
-from there rendered it without a header — no profile, no settings — because
+from there rendered it without a header - no profile, no settings - because
 nothing re-ran the bootstrap.
 
 `store.ensureSession()` is now awaited by the router's navigation guard for
@@ -190,7 +190,7 @@ whenever it is needed and never when it is not.
 
 ### QR codes are generated in the browser
 
-The straightforward option is a third-party image API — request a URL, get a
+The straightforward option is a third-party image API - request a URL, get a
 PNG. It also means every restaurant's private menu link is sent to a company
 with no relationship to this product, and that the feature breaks when that
 service does.
@@ -206,9 +206,9 @@ the share dialog.
 | Layer | |
 | --- | --- |
 | Frontend | Vue 3 (`<script setup>`), Vue Router, Pinia, Vite |
-| i18n | vue-i18n — dashboard in 3 locales, menus publishable in 9 languages |
+| i18n | vue-i18n - dashboard in 3 locales, menus publishable in 9 languages |
 | Database | Postgres (Supabase), Row Level Security, `security definer` RPC |
-| Auth | Supabase Auth — email/password, confirmation, password reset |
+| Auth | Supabase Auth - email/password, confirmation, password reset |
 | Storage | Supabase Storage, owner-scoped object paths |
 | Tests | Vitest |
 | CI/CD | GitHub Actions, Firebase Hosting |
@@ -221,14 +221,14 @@ Six tables, 25 RLS policies, seven functions, seven triggers, eight migrations.
 
 ```
 src/
-  api/            data access — one module per table, errors thrown not returned
+  api/            data access - one module per table, errors thrown not returned
   components/     editor widgets, modals, the public-menu lightbox
   views/          routed pages, including the public CustomerMenu
   stores/         Pinia store: workspace state and editor actions
   media.js        image compression, upload, owner-scoped paths
   structureShape.js  defaults and repairs for the structure JSONB
   descriptorFields.js  the stored field names, in one place
-supabase/migrations/   schema, policies, functions — the security model
+supabase/migrations/   schema, policies, functions - the security model
 scripts/          demo seeding and one-off maintenance
 tests/            Vitest suites
 ```
@@ -237,7 +237,7 @@ tests/            Vitest suites
 
 ## Testing
 
-`npm test` — **127 passing**, plus 9 that are opt-in.
+`npm test` - **127 passing**, plus 9 that are opt-in.
 
 | Suite | Covers |
 | --- | --- |
@@ -253,7 +253,7 @@ tests/            Vitest suites
 | `tests/demo.test.js` | which address counts as the shared demo account |
 | `tests/loginPage.test.js` | the demo panel: when it shows, and what pressing it does |
 | `tests/mainHeader.test.js` | account deletion is hidden from the demo account |
-| `tests/rls.test.js` | **opt-in** — cross-account isolation and demo protection, against a real database |
+| `tests/rls.test.js` | **opt-in** - cross-account isolation and demo protection, against a real database |
 
 Component tests use `@vue/test-utils` under happy-dom and opt in per file with
 `// @vitest-environment happy-dom`; everything else runs in node, which is
@@ -270,20 +270,20 @@ another account as owner is rejected outright. It then checks that `anon` is
 refused by all five workspace tables, that the public-menu RPC is nonetheless
 reachable anonymously, and that it cannot be tricked into resolving a structure
 by its id instead of its slug. Every other suite tests logic that *surrounds*
-the boundary — this one tests the boundary. It stays skipped unless
+the boundary - this one tests the boundary. It stays skipped unless
 `RLS_TEST_A_*` and `RLS_TEST_B_*` are set, because it needs two real confirmed
 accounts and will not create them.
 
 It also holds the assertion that the **shared demo account cannot delete
 itself**: it signs in with the published credentials and calls `delete_account()`
 for real, expecting a refusal. Hiding the button is presentation; this is the
-guard. The test runs whenever `VITE_DEMO_*` is configured — and if the
+guard. The test runs whenever `VITE_DEMO_*` is configured - and if the
 protection ever regresses, it fails by deleting the showcase, which is the
 loudest possible way to find out.
 
 **`tests/apiOwnership.test.js` exists because of a real bug.** Duplicating a
 menu wrote two rows without a `user_id`, against columns that are `NOT NULL`
-behind an ownership policy — so the feature could not have worked. The fix was
+behind an ownership policy - so the feature could not have worked. The fix was
 structural rather than a patch: the data-access layer now takes `userId` as a
 required argument, and this suite asserts every write still sends it. Reverting
 the fix turns the suite red.
@@ -298,8 +298,8 @@ What is planned but not built is in [ROADMAP.md](ROADMAP.md).
 - **Records are stored as UI form descriptors, not as domain objects.** A dish
   is an array of form-field definitions with one localised tab per language, and
   the field names inside it are Italian strings (`Titolo`, `Descrizione`) that
-  the data itself depends on. It made the editor almost free to build — the
-  dashboard renders the descriptor directly — and it has been wrong at every
+  the data itself depends on. It made the editor almost free to build - the
+  dashboard renders the descriptor directly - and it has been wrong at every
   point since. Querying is awkward, the storage format is coupled to the UI's
   layout, and renaming a label means migrating every row.
   `src/descriptorFields.js` keeps the strings in one place so the eventual
@@ -330,7 +330,7 @@ What is planned but not built is in [ROADMAP.md](ROADMAP.md).
 
 ## Running it locally
 
-Requires **Node 22 or newer** — `@supabase/supabase-js` needs a native
+Requires **Node 22 or newer** - `@supabase/supabase-js` needs a native
 `WebSocket`, which older versions lack.
 
 ```bash
@@ -347,7 +347,7 @@ VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=<your publishable/anon key>
 ```
 
-The publishable key is safe in a browser bundle — it carries the `anon` role,
+The publishable key is safe in a browser bundle - it carries the `anon` role,
 which is revoked from every table and may call exactly one function. The
 `service_role` key is the opposite: it bypasses RLS entirely, so it must never
 carry a `VITE_` prefix or Vite will inline it into the client bundle.
@@ -381,7 +381,7 @@ npm run prerender # link-preview files only, against the existing dist/
 
 `build` calls `scripts/prerender-menus.mjs` at the end. Without a
 `SUPABASE_SERVICE_ROLE_KEY` it prints a line and skips, so CI still builds a
-working site — one whose menus fall back to the generic preview card.
+working site - one whose menus fall back to the generic preview card.
 
 ### Seeding the demo
 
@@ -389,7 +389,7 @@ working site — one whose menus fall back to the generic preview card.
 It is idempotent and scoped to the showcase account's own rows, so it cannot
 touch another workspace.
 
-Menu *content* lives in `demo-data.js`, but the images do not — they are
+Menu *content* lives in `demo-data.js`, but the images do not - they are
 uploaded through the dashboard like any restaurant's would be. `scripts/
 demo-media.json` is the snapshot of which image belongs where, written by
 `npm run seed -- --capture-media` while the demo looks right and restored on
@@ -408,8 +408,8 @@ repository secrets):
 | `SUPABASE_SERVICE_ROLE_KEY` | RLS scopes every table to its owner, so the publishable key cannot write these rows. |
 | `SHOWCASE_USER_ID` | The auth user id that owns the demo restaurants. Without it the seed assigns them to a placeholder and they will not appear in your dashboard. |
 
-Menu content in `demo-data.js` is written in a flat, readable shape — one entry
-per dish, translations grouped — and `seed.js` converts it into the JSONB the
+Menu content in `demo-data.js` is written in a flat, readable shape - one entry
+per dish, translations grouped - and `seed.js` converts it into the JSONB the
 database expects, so editing the demo does not require understanding the
 storage format.
 
