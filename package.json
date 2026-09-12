@@ -3,7 +3,7 @@
   "private": true,
   "license": "UNLICENSED",
   "version": "1.0.0",
-  "description": "Digital restaurant menu builder — design a menu in the admin panel, publish it to diners via link or QR code.",
+  "description": "Digital restaurant menu builder - design a menu in the admin panel, publish it to diners via link or QR code.",
   "type": "module",
   "//engines": "@supabase/supabase-js needs a native WebSocket, which Node gained in 22. On Node 20 scripts/seed.js dies at createClient.",
   "engines": {
@@ -18,12 +18,15 @@
     "prerender": "node scripts/prerender-menus.mjs",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "seed": "node scripts/seed.js",
     "migrate:images": "node scripts/migrate-images.js"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.5.0",

@@ -3,10 +3,10 @@
     <div v-if="open" class="vue-modal" @click.self="close">
       <transition name="drop-in">
         <div v-if="open" class="vue-modal-inner">
-          <div class="vue-modal-content" role="dialog" aria-modal="true" :aria-label="modalLabel">
+          <div ref="dialog" class="vue-modal-content" role="dialog" aria-modal="true" tabindex="-1" :aria-label="modalLabel">
             <div class="modal-header">
               <h5 class="modal-title">{{ modalLabel }}</h5>
-              <button type="button" class="close" :aria-label="$t('close')" @click="close">
+              <button type="button" class="close" :aria-label="$t('close')" :disabled="uploading" @click="close">
                 <font-awesome-icon icon="fa-solid fa-xmark" />
               </button>
             </div>
@@ -33,6 +33,7 @@
                       <div class="custom-control custom-switch">
                         <label class="switch">
                           <input type="checkbox" :checked="block.active !== false"
+                                 :aria-label="$t(block.active === false ? 'photo_hidden' : 'photo_shown')"
                                  @change="block.active = $event.target.checked">
                           <span class="slider round"></span>
                         </label>
@@ -41,9 +42,9 @@
                     </div>
 
                     <div>
-                      <div class="eliminate-btn" @click="deletePicture(block)">
+                      <button type="button" class="eliminate-btn" @click="deletePicture(block)">
                         {{ $t('delete') }}
-                      </div>
+                      </button>
                     </div>
                   </div>
                   <p v-if="uploading" class="upload-note" role="status">{{ $t('uploading') }}</p>
@@ -52,10 +53,10 @@
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn white-btn cancel-btn" @click="close">
+              <button type="button" class="btn white-btn cancel-btn" :disabled="uploading" @click="close">
                 {{ $t('cancel') }}
               </button>
-              <button type="button" class="btn green-btn save-btn" @click="save">
+              <button type="button" class="btn green-btn save-btn" :disabled="uploading" @click="save">
                 {{ $t('save') }}
               </button>
             </div>
@@ -74,8 +75,9 @@ import TabLanguages from './TabLanguages.vue'
 import BaseInput from './BaseInput.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import CheckboxAllergens from './CheckboxAllergens.vue'
-import { onBeforeMount, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { ACCEPTED_IMAGE_TYPES, mediaUrl, uploadStructureImage } from '../media.js'
+import { useDialogFocus } from '../useDialogFocus.js'
 
 const store = useStore()
 const { t } = useI18n()
@@ -100,7 +102,7 @@ const props = defineProps({
   },
   modalLabel: {
     type: String,
-    default: 'Aggiuni Lista'
+    default: 'Edit item'
   },
   action: {
     type: String,
@@ -115,6 +117,7 @@ const props = defineProps({
 const uploading = ref(false)
 const uploadError = ref('')
 const currentTab = ref('')
+const dialog = ref(null)
 
 onBeforeMount(() => {
   currentTab.value = store.selectedStructure.structure.language_main
@@ -182,26 +185,19 @@ const removeDescription = (index) => {
   emits('removeDescription', props.modalData, index)
 }
 const save = () => {
+  if (uploading.value) return
   emits('closeModal', props.modalData, props.index, props.action, props.type)
 }
 const close = () => {
+  if (uploading.value) return
   emits('closeModal', null, props.index, props.action)
 }
-
-/**
- * Escape closes the editor, as it does in every other modal here.
- *
- * The listener is on window rather than the backdrop: the backdrop is a plain
- * div with no tabindex, so a keydown bound to it only ever fires when focus
- * has already landed on something inside — which is not the case immediately
- * after opening.
- */
-const onKeydown = (event) => {
-  if (event.key === 'Escape' && props.open) close()
-}
-
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
+useDialogFocus({
+  isOpen: () => props.open,
+  dialog,
+  onClose: close,
+  canClose: () => !uploading.value
+})
 </script>
 
 <style scoped>
@@ -237,6 +233,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   font-weight: 400;
   text-align: center;
   vertical-align: middle;
+  border-style: solid;
 }
 
 .eliminate-btn:hover {
@@ -490,12 +487,12 @@ p {
 .vue-modal-content { border-color: var(--c-line); border-radius: var(--r-md); box-shadow: var(--shadow-lg); }
 .modal-header { align-items: center; padding: var(--s-4) var(--s-5); background: var(--c-surface); border-bottom: 1px solid var(--c-line); border-radius: var(--r-md) var(--r-md) 0 0; }
 .modal-title, h5 { font-size: 1.125rem; font-weight: 750; color: var(--c-ink); }
-.close { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-ink-3); }
+.close { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--c-ink-3); }
 .close:hover { background: var(--c-line-2); color: var(--c-ink); }
 .modal-body { padding: var(--s-4) var(--s-5); margin-bottom: 0; }
 .modal-footer { gap: var(--s-2); padding: var(--s-3) var(--s-5); border-color: var(--c-line); }
 .modal-footer > * { margin: 0; }
-.modal-footer .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 var(--s-4); border-radius: var(--r-sm); font: inherit; font-weight: 700; }
+.modal-footer .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--s-4); border-radius: var(--r-sm); font: inherit; font-weight: 700; }
 .modal-footer .cancel-btn { background: var(--c-surface); border: 1px solid var(--c-line-strong); color: var(--c-ink); }
 .modal-footer .cancel-btn:hover { background: var(--c-line-2); }
 .modal-footer .save-btn { background: var(--c-brand); border: 1px solid var(--c-brand); color: #fff; }

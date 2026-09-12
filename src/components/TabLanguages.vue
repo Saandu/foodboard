@@ -22,9 +22,9 @@
             <div v-if="input.value">
               <img :src="mediaUrl(input.value)" alt="" class="picture-select">
               <div>
-                <div class="eliminate-btn" @click="deletePicture()">
+                <button type="button" class="eliminate-btn" @click="deletePicture()">
                   {{ $t('delete') }}
-                </div>
+                </button>
               </div>
             </div>
             <p v-if="uploading" class="upload-note" role="status">{{ $t('uploading') }}</p>
@@ -50,19 +50,19 @@
                 <div v-for="(price, index) in input.value" :key="index">
                   <div class="flex align-center">
                     <BaseInput :label="$t('price')" type="text" v-model="price.suffix" />
-                    <p v-if="index !== 0 && tab[0].tabLabel === store.selectedStructure.structure.language_main"
-                       class="red" @click="removePrice(index)">
-{{ $t('delete') }}
-</p>
+                     <button v-if="index !== 0 && tab[0].tabLabel === store.selectedStructure.structure.language_main"
+                        type="button" class="inline-action inline-action--danger" @click="removePrice(index)">
+ {{ $t('delete') }}
+</button>
                   </div>
                 </div>
               </div>
             </div>
             <div class="flex justify-end">
-              <p v-if="tab[0].tabLabel === store.selectedStructure.structure.language_main" class="add-price"
-                 @click="addPrice">
-{{ $t('add_btn') }}
-</p>
+              <button v-if="tab[0].tabLabel === store.selectedStructure.structure.language_main" type="button" class="inline-action"
+                  @click="addPrice">
+ {{ $t('add_btn') }}
+</button>
             </div>
           </div>
 
@@ -72,18 +72,18 @@
               <div v-for="(description, index) in input.value" :key="index">
                 <div class="">
                   <BaseInput type="text" v-model="description.value" />
-                  <p v-if="index !== 0 && tab[0].tabLabel === store.selectedStructure.structure.language_main"
-                     class="red" @click="removeDescription(index)">
-{{ $t('delete') }}
-</p>
+                  <button v-if="index !== 0 && tab[0].tabLabel === store.selectedStructure.structure.language_main"
+                     type="button" class="inline-action inline-action--danger" @click="removeDescription(index)">
+ {{ $t('delete') }}
+</button>
                 </div>
               </div>
             </div>
             <div class="flex justify-end">
-              <p v-if="tab[0].tabLabel === store.selectedStructure.structure.language_main" class="add-price"
-                 @click="addDescription">
-{{ $t('add_btn') }}
-</p>
+              <button v-if="tab[0].tabLabel === store.selectedStructure.structure.language_main" type="button" class="inline-action"
+                  @click="addDescription">
+ {{ $t('add_btn') }}
+</button>
             </div>
           </div>
         </div>
@@ -341,14 +341,14 @@ const deletePicture = () => {
 }
 
 .tab-nav-item {
-  min-height: 36px;
+  min-height: 44px;
   font: 700 .8rem/1 inherit;
   text-align: center;
   padding: 0 var(--s-3);
   border: 1px solid transparent;
   border-radius: var(--r-sm);
   background: transparent;
-  min-width: 36px;
+  min-width: 44px;
   cursor: pointer;
   transition: background-color .18s ease, color .18s ease;
 }
@@ -432,7 +432,23 @@ const deletePicture = () => {
   font-weight: 400;
   text-align: center;
   vertical-align: middle;
+  border-style: solid;
 }
+
+.inline-action {
+  min-height: 44px;
+  padding: 0 var(--s-2);
+  color: var(--c-brand);
+  font: 700 .85rem/1 inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.inline-action:hover { background: var(--c-brand-soft); }
+.inline-action--danger { color: var(--c-danger); }
+.inline-action--danger:hover { background: var(--c-danger-soft); }
 
 .input-label {
   margin-bottom: 0.5rem;

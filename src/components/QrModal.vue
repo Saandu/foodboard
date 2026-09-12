@@ -1,13 +1,13 @@
 <template>
   <div v-if="open" class="modal-backdrop" @click.self="close">
-    <section class="qr-dialog" role="dialog" aria-modal="true" tabindex="-1" :aria-label="$t('qr_heading')">
+    <section ref="dialog" class="qr-dialog" role="dialog" aria-modal="true" tabindex="-1" :aria-label="$t('qr_heading')">
       <header class="qr-dialog__header">
         <div>
           <span class="qr-dialog__eyebrow">{{ $t('qr_heading') }}</span>
           <h2>{{ store.selectedStructure?.title || $t('menu') }}</h2>
           <p>{{ $t('qr_info') }}</p>
         </div>
-        <button type="button" class="icon-btn" :aria-label="$t('close')" @click="close">
+        <button type="button" class="icon-btn" :aria-label="$t('close')" :disabled="rotating" @click="close">
           <font-awesome-icon icon="fa-solid fa-xmark" />
         </button>
       </header>
@@ -68,9 +68,10 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useStore } from '../stores/store.js'
+import { useDialogFocus } from '../useDialogFocus.js'
 
 const emits = defineEmits(['close'])
 const props = defineProps({ open: { type: Boolean, required: true } })
@@ -82,6 +83,7 @@ const confirmingRotate = ref(false)
 const rotating = ref(false)
 const rotated = ref(false)
 const rotateError = ref(false)
+const dialog = ref(null)
 
 // QR codes must remain usable after printing or sharing, including when this
 // dashboard happens to be opened from a local Vite server.
@@ -121,22 +123,13 @@ watch([() => props.open, qrLink], ([isOpen]) => {
   renderQr()
 }, { immediate: true })
 
-const close = () => emits('close')
-
-/**
- * Escape closes the dialog.
- *
- * This was bound to the backdrop with `@keydown.esc`, which never fired: the
- * backdrop is a div with no tabindex, so it is not in the focus order and
- * receives no key events until something inside it is focused. A window
- * listener is what the photo lightbox already does.
- */
-const onKeydown = (event) => {
-  if (event.key === 'Escape' && props.open) close()
-}
-
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
+const close = () => { if (!rotating.value) emits('close') }
+useDialogFocus({
+  isOpen: () => props.open,
+  dialog,
+  onClose: close,
+  canClose: () => !rotating.value
+})
 
 const copyURL = async () => {
   try {

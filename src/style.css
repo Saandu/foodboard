@@ -9,7 +9,7 @@
     /* Neutrals */
     --c-ink: #16201c;
     --c-ink-2: #4e5a53;
-    --c-ink-3: #78837c;
+    --c-ink-3: #667169;
     --c-line: #dce3dd;
     --c-line-strong: #c6d1c9;
     --c-line-2: #f0f3f0;
@@ -174,7 +174,7 @@ img, svg { max-width: 100%; }
     font-size: 0.875rem;
     font-weight: 600;
     line-height: 1.2;
-    min-height: 42px;
+    min-height: 44px;
     padding: 0 var(--s-4);
     border: 1px solid transparent;
     border-radius: var(--r-sm);
@@ -216,7 +216,7 @@ img, svg { max-width: 100%; }
 .btn-quiet:hover { color: var(--c-ink); background: var(--c-line-2); }
 
 .btn-text {
-    min-height: 36px;
+    min-height: 44px;
     padding: 0 var(--s-2);
     color: var(--c-brand);
     background: transparent;
@@ -339,7 +339,7 @@ button:disabled,
 }
 
 .filter-chip {
-    min-height: 34px;
+    min-height: 44px;
     padding: 0 var(--s-3);
     border: 1px solid var(--c-line);
     border-radius: var(--r-sm);
@@ -370,8 +370,8 @@ button:disabled,
 .icon-btn {
     display: inline-grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     color: var(--c-ink-2);
     background: transparent;
@@ -398,6 +398,7 @@ button:disabled,
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
         transition-duration: 0.01ms !important;
     }
 }

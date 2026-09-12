@@ -1,0 +1,40 @@
+name: Database security
+
+# The unit suite stays deterministic and secretless. This second workflow
+# signs in as real disposable accounts and proves that Row Level Security still
+# isolates customer workspaces in the deployed Supabase project.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '20 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  rls:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      RLS_TEST_A_EMAIL: ${{ secrets.RLS_TEST_A_EMAIL }}
+      RLS_TEST_A_PASSWORD: ${{ secrets.RLS_TEST_A_PASSWORD }}
+      RLS_TEST_B_EMAIL: ${{ secrets.RLS_TEST_B_EMAIL }}
+      RLS_TEST_B_PASSWORD: ${{ secrets.RLS_TEST_B_PASSWORD }}
+      VITE_DEMO_EMAIL: ${{ secrets.VITE_DEMO_EMAIL }}
+      VITE_DEMO_PASSWORD: ${{ secrets.VITE_DEMO_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Verify integration-test configuration
+        run: node -e "for (const key of ['VITE_SUPABASE_URL','VITE_SUPABASE_PUBLISHABLE_KEY','RLS_TEST_A_EMAIL','RLS_TEST_A_PASSWORD','RLS_TEST_B_EMAIL','RLS_TEST_B_PASSWORD','VITE_DEMO_EMAIL','VITE_DEMO_PASSWORD']) if (!process.env[key]) throw new Error('Missing ' + key)"
+
+      - name: Verify tenant isolation and demo protection
+        run: npm test -- tests/rls.test.js

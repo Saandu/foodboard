@@ -206,7 +206,7 @@ input[type="checkbox"]:hover {
   outline: 0;
 }
 
-.workspace-sidebar { display: grid; align-content: start; gap: var(--s-4); }.back-link { justify-content: flex-start; width: fit-content; }.sidebar-group { display: grid; gap: var(--s-2); padding: var(--s-4) 0; border-top: 1px solid var(--c-line); }.sidebar-group h2 { color: var(--c-ink-3); font-size: .75rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }.feedback-link { padding: 0; color: var(--c-ink-2); text-align: left; font: 600 .85rem/1.4 inherit; background: transparent; border: 0; cursor: pointer; }.feedback-link:hover { color: var(--c-brand); text-decoration: underline; }
+.workspace-sidebar { display: grid; align-content: start; gap: var(--s-4); }.back-link { justify-content: flex-start; width: fit-content; }.sidebar-group { display: grid; gap: var(--s-2); padding: var(--s-4) 0; border-top: 1px solid var(--c-line); }.sidebar-group h2 { color: var(--c-ink-3); font-size: .75rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }.feedback-link { min-height: 44px; padding: 0; color: var(--c-ink-2); text-align: left; font: 600 .85rem/1.4 inherit; background: transparent; border: 0; cursor: pointer; }.feedback-link:hover { color: var(--c-brand); text-decoration: underline; }
 
 .stato-checkboxes label, .stato-checkboxes input {
   cursor: pointer;

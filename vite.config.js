@@ -53,6 +53,7 @@ export default defineConfig({
   test: {
     // Most of the suite is pure logic and runs faster without a DOM. The
     // component tests opt themselves in with `@vitest-environment happy-dom`.
-    environment: 'node'
+    environment: 'node',
+    exclude: ['e2e/**', 'node_modules/**']
   }
 })

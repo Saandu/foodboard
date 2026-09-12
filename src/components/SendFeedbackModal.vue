@@ -1,7 +1,7 @@
 <template>
   <div v-if="open" class="modal-backdrop" @click.self="close">
-    <form class="feedback-dialog" role="dialog" aria-modal="true" :aria-label="$t('send_feedback')" @submit.prevent="send">
-      <header><div><span>{{ $t('feedback') }}</span><h2>{{ $t('send_feedback') }}</h2></div><button type="button" class="icon-btn" :aria-label="$t('close')" @click="close"><font-awesome-icon icon="fa-solid fa-xmark" /></button></header>
+    <form ref="dialog" class="feedback-dialog" role="dialog" aria-modal="true" tabindex="-1" :aria-label="$t('send_feedback')" @submit.prevent="send">
+      <header><div><span>{{ $t('feedback') }}</span><h2>{{ $t('send_feedback') }}</h2></div><button type="button" class="icon-btn" :aria-label="$t('close')" :disabled="busy" @click="close"><font-awesome-icon icon="fa-solid fa-xmark" /></button></header>
       <p>{{ $t('send_feedback_prompt') }}</p>
       <label><span>{{ $t('subject') }}*</span><input v-model.trim="subject" type="text" :aria-invalid="subjectError" /><small v-if="subjectError" role="alert">{{ $t('field_required') }}</small></label>
       <label><span>{{ $t('message') }}*</span><textarea v-model.trim="message" rows="6" :aria-invalid="messageError"></textarea><small v-if="messageError" role="alert">{{ $t('field_required') }}</small></label>
@@ -18,9 +18,10 @@ import { ref } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useStore } from '../stores/store.js'
 import { ACCEPTED_IMAGE_TYPES, uploadStructureImage } from '../media.js'
+import { useDialogFocus } from '../useDialogFocus.js'
 
 const emits = defineEmits(['closeFeedback'])
-defineProps({ open: { type: Boolean, required: true } })
+const props = defineProps({ open: { type: Boolean, required: true } })
 const store = useStore()
 const subject = ref('')
 const message = ref('')
@@ -31,6 +32,7 @@ const attachmentError = ref('')
 const feedbackState = ref('')
 const sendError = ref('')
 const busy = ref(false)
+const dialog = ref(null)
 
 // A screenshot goes to Storage under <uid>/feedback/, which satisfies the same
 // owner-scoped policy as every other upload, and is compressed on the way.
@@ -55,6 +57,7 @@ const getPicture = async (event) => {
 }
 
 const close = () => {
+  if (busy.value) return
   emits('closeFeedback')
   subject.value = ''
   message.value = ''
@@ -65,6 +68,12 @@ const close = () => {
   subjectError.value = false
   messageError.value = false
 }
+useDialogFocus({
+  isOpen: () => props.open,
+  dialog,
+  onClose: close,
+  canClose: () => !busy.value
+})
 
 const send = async () => {
   subjectError.value = !subject.value

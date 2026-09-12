@@ -4,7 +4,7 @@ name: Reset demo data
 
 on:
   schedule:
-    # Every three hours across the working day, plus one overnight run.
+    # Four restores across the working day, plus one late-evening safeguard.
     #
     # The credentials are published, so the demo is defaced-until-reset rather
     # than defaced-until-noticed, and a daily reset meant a visitor's mess could

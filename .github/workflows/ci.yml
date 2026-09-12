@@ -29,8 +29,8 @@ jobs:
 
       - name: Unit tests
         # The RLS suite is skipped here: it signs in as two real accounts and
-        # asserts neither can read the other's rows, which needs credentials
-        # this workflow deliberately does not hold. See tests/rls.test.js.
+        # asserts neither can read the other's rows. The Database security
+        # workflow runs those live assertions with disposable credentials.
         run: npm test
 
       - name: Build
@@ -38,3 +38,32 @@ jobs:
 
       - name: Audit dependencies
         run: npm audit --audit-level=high
+
+  browser:
+    # Repository secrets are intentionally unavailable to untrusted pull
+    # requests. Pushes to main and manual runs exercise the real hosted data.
+    if: github.event_name != 'pull_request'
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_DEMO_EMAIL: ${{ secrets.VITE_DEMO_EMAIL }}
+      VITE_DEMO_PASSWORD: ${{ secrets.VITE_DEMO_PASSWORD }}
+      VITE_PUBLIC_MENU_ORIGIN: https://foodboard-demo.web.app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Verify browser-test configuration
+        run: node -e "for (const key of ['VITE_SUPABASE_URL','VITE_SUPABASE_PUBLISHABLE_KEY','VITE_DEMO_EMAIL','VITE_DEMO_PASSWORD']) if (!process.env[key]) throw new Error('Missing ' + key)"
+
+      - name: Browser smoke tests
+        run: npm run test:e2e

@@ -53,7 +53,7 @@ const updateSelected = (event) => {
   font-family: inherit;
   display: block;
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 var(--s-3);
   font-size: 0.95rem;
   font-weight: 400;

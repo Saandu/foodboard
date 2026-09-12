@@ -1,7 +1,7 @@
 <template>
-  <div v-if="src" class="lightbox" role="dialog" aria-modal="true"
+  <div v-if="src" ref="dialog" class="lightbox" role="dialog" aria-modal="true" tabindex="-1"
        :aria-label="title || enlargeLabel" @click.self="close">
-    <button ref="closeButton" type="button" class="lightbox__close"
+    <button type="button" class="lightbox__close"
             :aria-label="closeLabel" @click="close">
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -27,7 +27,8 @@
  * released on unmount, so leaving the route with the overlay open cannot
  * strand the page in a scroll-locked state.
  */
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { ref } from 'vue'
+import { useDialogFocus } from '../useDialogFocus.js'
 
 const props = defineProps({
   /** Image URL; an empty string keeps the overlay closed. */
@@ -39,38 +40,10 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const closeButton = ref(null)
-let lastFocused = null
+const dialog = ref(null)
 
 const close = () => emit('close')
-
-const lockScroll = (locked) => {
-  document.body.style.overflow = locked ? 'hidden' : ''
-}
-
-watch(() => props.src, async (src, previous) => {
-  if (src && !previous) {
-    lastFocused = document.activeElement
-    // The page behind must not scroll under the overlay on a phone.
-    lockScroll(true)
-    await nextTick()
-    closeButton.value?.focus()
-  } else if (!src && previous) {
-    lockScroll(false)
-    lastFocused?.focus?.()
-    lastFocused = null
-  }
-})
-
-const onKeydown = (event) => {
-  if (event.key === 'Escape' && props.src) close()
-}
-
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKeydown)
-  lockScroll(false)
-})
+useDialogFocus({ isOpen: () => Boolean(props.src), dialog, onClose: close })
 </script>
 
 <style scoped>

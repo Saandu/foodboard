@@ -10,8 +10,8 @@ is the work still outstanding.
 
 ### A visitor's uploads outlive their visit
 
-The reset now restores the *rows* - `scripts/demo-media.json` puts the right
-image back on every dish every three hours - but the object a visitor uploaded
+The reset now restores the *rows* atomically - `scripts/demo-media.json` puts the right
+image back on every dish five times a day - but the object a visitor uploaded
 stays in Storage, referenced by nothing. Nothing sweeps the bucket, so the demo
 accumulates dead bytes at whatever rate people try the editor, and uploads are
 otherwise unmetered: 5 MB an image, no per-account quota. A reset that also

@@ -36,5 +36,10 @@ skills-lock.json
 # Firebase deploy cache
 .firebase/
 
+# Local browser-test and Supabase CLI state
+test-results/
+playwright-report/
+supabase/.temp/
+
 # Session working notes, not part of the published project
 HANDOFF.md

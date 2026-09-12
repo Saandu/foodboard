@@ -41,9 +41,7 @@ const store = useStore()
 const route = useRoute()
 
 const appReady = ref(false)
-const isPublicPage = computed(() => {
-  return route.path === '/' || route.path.startsWith('/menu/') || route.path === '/login' || route.path === '/register' || route.path === '/forgot-password' || route.path === '/reset-password'
-})
+const isPublicPage = computed(() => route.meta.public === true)
 
 onBeforeMount(async () => {
   // Public pages must not wait on the dashboard bootstrap — a diner opening a

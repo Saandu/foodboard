@@ -4,26 +4,29 @@
        @click="handleClick($event)"
        class="input-wrap">
     <div v-if="label && type !== 'checkbox'" class="label-container">
-      <label :class="{ 'color-label': isColor }" :for="isColor ? id : undefined" class="input-label">
+      <label :class="{ 'color-label': isColor }" :for="inputId" class="input-label">
         {{ label }}
       </label>
     </div>
     <input v-if="type !== 'textarea'" class="field-input"
-           :id="id"
+           :id="inputId"
            :type="type"
            :value="modelValue"
            :accept="accept"
            :checked="checked"
            :disabled="props.disabled"
     />
-    <textarea v-if="type === 'textarea'" class="field-input"
+    <textarea v-if="type === 'textarea'" class="field-input" :id="inputId"
+              :disabled="props.disabled"
               :value="modelValue"
     ></textarea>
-    <div v-if="label && type === 'checkbox'" class="checkbox-text">{{ label }}</div>
+    <label v-if="label && type === 'checkbox'" :for="inputId" class="checkbox-text">{{ label }}</label>
   </div>
 </template>
 
 <script setup>
+import { computed, useId } from 'vue'
+
 const emits = defineEmits(['updateCheckboxGroup', 'update:modelValue'])
 const props = defineProps({
   label: {
@@ -62,6 +65,8 @@ const props = defineProps({
     type: Boolean
   }
 })
+const generatedId = useId()
+const inputId = computed(() => props.id || generatedId)
 
 const handleClick = (event) => {
   if (props.group) {
@@ -101,7 +106,7 @@ const handleInput = (event) => {
 
 .field-input {
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px 12px;
   font-family: inherit;
   font-size: 0.95rem;
@@ -131,7 +136,7 @@ input[type="file"] {
 }
 
 input[type="file"]::file-selector-button {
-  min-height: 32px;
+  min-height: 36px;
   margin-right: var(--s-3);
   padding: 0 var(--s-3);
   border: 0;
@@ -146,7 +151,7 @@ input[type="color"] {
   padding: 4px;
   cursor: pointer;
   width: 64px;
-  height: 42px;
+  height: 44px;
 }
 
 input[type="color"]::-webkit-color-swatch-wrapper {

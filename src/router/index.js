@@ -6,29 +6,32 @@ const routes = [
   {
     path: '/',
     name: 'HomePage',
-    component: () => import('../views/HomePage.vue')
+    component: () => import('../views/HomePage.vue'),
+    meta: { public: true }
   },
   {
     path: '/login',
     name: 'LoginPage',
     component: () => import('../views/LoginPage.vue'),
-    meta: { requiresGuest: true }
+    meta: { public: true, requiresGuest: true }
   },
   {
     path: '/register',
     name: 'RegisterPage',
     component: () => import('../views/LoginPage.vue'),
-    meta: { requiresGuest: true }
+    meta: { public: true, requiresGuest: true }
   },
   {
     path: '/forgot-password',
     name: 'ForgotPasswordPage',
-    component: () => import('../views/LoginPage.vue')
+    component: () => import('../views/LoginPage.vue'),
+    meta: { public: true }
   },
   {
     path: '/reset-password',
     name: 'ResetPasswordPage',
-    component: () => import('../views/ResetPasswordPage.vue')
+    component: () => import('../views/ResetPasswordPage.vue'),
+    meta: { public: true }
   },
   {
     path: '/structures',
@@ -51,12 +54,14 @@ const routes = [
   {
     path: '/menu/:slug',
     name: 'CustomerMenu',
-    component: () => import('../views/CustomerMenu.vue')
+    component: () => import('../views/CustomerMenu.vue'),
+    meta: { public: true }
   },
   {
-    path: '/404',
+    path: '/:pathMatch(.*)*',
     name: 'ErrorPage',
-    component: () => import('../views/ErrorPage.vue')
+    component: () => import('../views/ErrorPage.vue'),
+    meta: { public: true }
   }
 ]
 
@@ -65,23 +70,23 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const { data: { session } } = await supabase.auth.getSession()
   const isAuthenticated = Boolean(session)
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    return next({ path: '/login', query: { redirect: to.fullPath } })
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
 
   if (to.meta.requiresGuest && isAuthenticated) {
-    return next('/structures')
+    return '/structures'
   }
 
   // Arriving at the marketing page with a live session goes straight to the
   // workspace. Only on entry: navigating home later is still allowed, so the
   // landing page stays reachable without signing out.
   if (to.path === '/' && isAuthenticated && from === START_LOCATION) {
-    return next('/structures')
+    return '/structures'
   }
 
   // Load the workspace before the shell renders. Without this a client-side
@@ -91,7 +96,6 @@ router.beforeEach(async (to, from, next) => {
     await useStore().ensureSession()
   }
 
-  next()
 })
 
 export default router

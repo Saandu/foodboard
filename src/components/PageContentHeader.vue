@@ -4,7 +4,7 @@
       <div class="workspace-context">
         <details class="structure-picker">
           <summary class="structure-picker__trigger">
-            <span class="structure-picker__label">My menus</span>
+            <span class="structure-picker__label">{{ $t('structures') }}</span>
             <strong>{{ store.selectedStructure?.title }}</strong>
             <font-awesome-icon icon="fa-solid fa-angle-down" aria-hidden="true" />
           </summary>
@@ -28,7 +28,7 @@
 
         <div class="workspace-actions">
           <button type="button" class="btn btn-primary" :disabled="creating" @click="createMenu">
-            {{ creating ? 'Creating…' : 'Add menu' }}
+            {{ $t(creating ? 'creating' : 'add_menu') }}
           </button>
           <button type="button" class="btn btn-quiet" @click="store.isQrOpen = true">QR</button>
           <button type="button" class="btn btn-quiet" @click="openWebPreview">
@@ -98,10 +98,10 @@ const switchStructure = async (index) => {
 .structure-picker__trigger svg { color: var(--c-ink-3); font-size: .75rem; transition: transform 180ms ease; }
 .structure-picker[open] .structure-picker__trigger svg { transform: rotate(180deg); }
 .structure-picker__menu { position: absolute; top: calc(100% + var(--s-2)); left: 0; z-index: var(--z-dropdown); min-width: 240px; padding: var(--s-1); background: var(--c-surface); border: 1px solid var(--c-line-strong); border-radius: var(--r-md); box-shadow: var(--shadow-sm); }
-.structure-picker__menu button { display: block; width: 100%; min-height: 40px; padding: 0 var(--s-3); color: var(--c-ink-2); text-align: left; font: 600 .9rem/1.2 inherit; background: transparent; border: 0; border-radius: var(--r-sm); cursor: pointer; }
+.structure-picker__menu button { display: block; width: 100%; min-height: 44px; padding: 0 var(--s-3); color: var(--c-ink-2); text-align: left; font: 600 .9rem/1.2 inherit; background: transparent; border: 0; border-radius: var(--r-sm); cursor: pointer; }
 .structure-picker__menu button:hover, .structure-picker__menu button.is-current { color: var(--c-ink); background: var(--c-brand-soft); }
 .workspace-nav { display: flex; align-items: center; gap: var(--s-1); margin-left: auto; }
-.workspace-nav a { min-height: 36px; display: inline-flex; align-items: center; padding: 0 var(--s-3); color: var(--c-ink-2); font-size: .875rem; font-weight: 650; border-radius: var(--r-sm); }
+.workspace-nav a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 var(--s-3); color: var(--c-ink-2); font-size: .875rem; font-weight: 650; border-radius: var(--r-sm); }
 .workspace-nav a:hover { color: var(--c-ink); background: var(--c-line-2); }
 .workspace-nav a.is-active { color: var(--c-brand); background: var(--c-brand-soft); }
 .workspace-actions { display: flex; align-items: center; gap: var(--s-2); }

@@ -80,53 +80,6 @@ const readManifest = () => {
 }
 
 /**
- * Marks the showcase account undeletable.
- *
- * delete_account() reads this table; see migration 20260906000000. The seed is
- * where it belongs rather than in the migration itself, because *which* id is
- * the showcase is deployment configuration, not schema.
- */
-async function ensureProtected () {
-  if (!ownedByRealAccount) return
-  const { error } = await request('protect showcase account', () =>
-    supabase.from('protected_accounts').upsert({
-      user_id: showcaseUserId,
-      reason: 'shared demo account: credentials are published in the README'
-    }, { onConflict: 'user_id' }))
-  if (error) throw new Error(`Failed protecting the showcase account: ${error.message}`)
-  console.log('  showcase account marked undeletable')
-}
-
-/* ------------------------------------------------------------------ *
- * Wipe and insert
- * ------------------------------------------------------------------ */
-
-async function wipe () {
-  const structureIds = demoStructures.map(structure => structure.structure_id)
-  const listIds = demoStructures.flatMap(structure => structure.lists.map(list => list.list_id))
-  const categoryIds = demoStructures.flatMap(structure => structure.lists.flatMap(list => list.categories.map(category => category.category_id)))
-  const deletes = [
-    ['products', 'category_id', categoryIds],
-    ['categories', 'list_id', listIds],
-    ['lists', 'structure_id', structureIds],
-    ['structures', 'structure_id', structureIds]
-  ]
-  // Only the placeholder users row is ours to remove. When the showcase belongs
-  // to a real account, its users row is owned by Supabase Auth's signup trigger
-  // and deleting it would wipe the person's profile.
-  if (!ownedByRealAccount) {
-    deletes.push(['users', 'user_id', [demoUser.user_id]])
-  }
-
-  for (const [table, column, values] of deletes) {
-    const { error } = await request(`clear ${table}`, () =>
-      supabase.from(table).delete().in(column, values))
-    if (error) throw new Error(`Failed clearing demo ${table}: ${error.message}`)
-    console.log(`  cleared demo ${table}`)
-  }
-}
-
-/**
  * Reads the logo currently on each demo structure.
  *
  * demo-data.js carries menu content, not branding — images are uploaded
@@ -196,12 +149,21 @@ function applyPhotos (productRows, photos) {
   return restored
 }
 
-async function insert (table, rows) {
-  if (!rows.length) return
-  const { error } = await request(`insert ${table}`, () =>
-    supabase.from(table).insert(rows))
-  if (error) throw new Error(`Failed inserting into ${table}: ${error.message}`)
-  console.log(`  inserted ${rows.length} into ${table}`)
+/** Replaces the complete showcase through one transactional RPC call. */
+async function resetShowcase ({ users, structures, lists, categories, products }) {
+  const { data, error } = await request('reset showcase transaction', () =>
+    supabase.rpc('reset_showcase', {
+      p_showcase_user_id: showcaseUserId,
+      p_users: users,
+      p_structures: structures,
+      p_lists: lists,
+      p_categories: categories,
+      p_products: products,
+      p_protect: ownedByRealAccount
+    }))
+
+  if (error) throw new Error(`Failed resetting the showcase: ${error.message}`)
+  return data
 }
 
 function buildRows (existingImages = new Map()) {
@@ -361,16 +323,8 @@ async function main () {
         'to your auth user id so the demo appears in your dashboard)'
   )
 
-  console.log('Clearing existing data...')
-  await wipe()
-
-  console.log('Seeding demo content...')
-  await ensureProtected()
-  await insert('users', users)
-  await insert('structures', structures)
-  await insert('lists', lists)
-  await insert('categories', categories)
-  await insert('products', products)
+  console.log('Resetting demo content in one transaction...')
+  await resetShowcase({ users, structures, lists, categories, products })
 
   const dishes = products.reduce(
     (total, row) => total + row.product.products.filter(p => p.type !== 'divisor').length,

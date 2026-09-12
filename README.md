@@ -1,6 +1,7 @@
 # FoodBoard
 
 [![CI](https://github.com/Saandu/foodboard/actions/workflows/ci.yml/badge.svg)](https://github.com/Saandu/foodboard/actions/workflows/ci.yml)
+[![Database security](https://github.com/Saandu/foodboard/actions/workflows/database-security.yml/badge.svg)](https://github.com/Saandu/foodboard/actions/workflows/database-security.yml)
 
 A multi-tenant digital menu builder: a restaurant owner designs a menu in the
 dashboard - categories, dishes, prices, allergens, translations - and publishes
@@ -21,11 +22,13 @@ it to diners as a link or a QR code on the table.
 These are published deliberately. The account owns nothing but the two showcase
 restaurants, `delete_account()` **refuses** it in Postgres rather than merely
 hiding the button, and [a workflow](.github/workflows/reset-demo.yml) reseeds
-the workspace every three hours - so edit anything you like. To keep your own
+the workspace five times a day - so edit anything you like. To keep your own
 menu instead, register normally; workspaces are isolated in Postgres, not in
 the client (see below).
 
-Vue 3 and Supabase. Built solo in 2026.
+Vue 3 and Supabase. Built as a solo portfolio product in 2026 with AI-assisted
+implementation and review; product decisions, architecture, verification and
+release ownership are mine.
 
 ---
 
@@ -210,12 +213,13 @@ the share dialog.
 | Database | Postgres (Supabase), Row Level Security, `security definer` RPC |
 | Auth | Supabase Auth - email/password, confirmation, password reset |
 | Storage | Supabase Storage, owner-scoped object paths |
-| Tests | Vitest |
-| CI/CD | GitHub Actions, Firebase Hosting |
+| Tests | Vitest + Playwright + axe, with live RLS integration coverage |
+| CI | GitHub Actions - lint, unit/component, browser and deployed-database checks |
+| Hosting | Firebase Hosting, released manually after green CI |
 | Tooling | ESLint (flat config) + `@stylistic`, `sharp` for build-time images |
 
-Roughly 9,000 lines across 69 source, script, test and migration files.
-Six tables, 25 RLS policies, seven functions, seven triggers, eight migrations.
+Roughly 11,000 lines across 86 source, script, test and migration files.
+Seven application tables, 25 RLS policies, seven functions, two triggers and ten migrations.
 
 ### Layout
 
@@ -237,7 +241,10 @@ tests/            Vitest suites
 
 ## Testing
 
-`npm test` - **127 passing**, plus 9 that are opt-in.
+`npm test` - **138 passing**, plus 11 live database assertions when their
+disposable-account credentials are present. `npm run test:e2e` runs four
+desktop/mobile browser checks across the public menu, 404 recovery and demo login,
+including automated WCAG A/AA scans on every page in those journeys.
 
 | Suite | Covers |
 | --- | --- |
@@ -253,7 +260,10 @@ tests/            Vitest suites
 | `tests/demo.test.js` | which address counts as the shared demo account |
 | `tests/loginPage.test.js` | the demo panel: when it shows, and what pressing it does |
 | `tests/mainHeader.test.js` | account deletion is hidden from the demo account |
+| `tests/atomicSeed.test.js` | the showcase uses one owner-validated transaction |
+| `tests/dialogFocus.test.js` | focus entry, Tab containment, Escape and focus restoration |
 | `tests/rls.test.js` | **opt-in** - cross-account isolation and demo protection, against a real database |
+| `e2e/portfolio-flow.spec.js` | published-menu, missing-route and one-click-demo browser journeys |
 
 Component tests use `@vue/test-utils` under happy-dom and opt in per file with
 `// @vitest-environment happy-dom`; everything else runs in node, which is
@@ -320,9 +330,10 @@ What is planned but not built is in [ROADMAP.md](ROADMAP.md).
   publishes at noon shows the site's own card until the next deploy. Getting it
   right the instant a menu goes live needs the request intercepted at the edge,
   which Firebase Hosting cannot do without Cloud Run.
-- **No end-to-end test.** Components and pure logic are covered, and the RLS
-  suite exercises the database boundary for real, but nothing drives a browser
-  through signup → build a menu → publish → scan. That path is checked by hand.
+- **Browser coverage is deliberately a smoke suite, not a full editor matrix.**
+  Playwright drives the public menu, missing-route recovery and one-click demo
+  on desktop and mobile. The longer signup → build → publish → scan journey is
+  still checked manually because confirmation email is outside the test runner.
 - **Single account per restaurant.** No staff logins, no roles. A real
   restaurant would need a membership table and policies keyed on it.
 
@@ -374,6 +385,7 @@ creates the profile row. Other commands:
 ```bash
 npm run build     # production build, then prerenders one file per published menu
 npm test          # unit and component suites
+npm run test:e2e  # desktop and mobile browser smoke suite
 npm run lint      # eslint
 npm run seed      # rebuild the demo restaurants (needs the service_role key)
 npm run prerender # link-preview files only, against the existing dist/
@@ -386,8 +398,9 @@ working site - one whose menus fall back to the generic preview card.
 ### Seeding the demo
 
 `npm run seed` rebuilds the showcase restaurants from `scripts/demo-data.js`.
-It is idempotent and scoped to the showcase account's own rows, so it cannot
-touch another workspace.
+It is idempotent, scoped to the showcase account's own rows and executed as one
+Postgres transaction. A failed request cannot leave the public demo half-empty,
+and ownership validation prevents a malformed payload touching another workspace.
 
 Menu *content* lives in `demo-data.js`, but the images do not - they are
 uploaded through the dashboard like any restaurant's would be. `scripts/
@@ -398,7 +411,7 @@ whatever was currently in the database, which was correct then and became
 exactly wrong once anyone could sign in: a visitor's replacement photo would
 have survived every reset. The seed also marks the showcase account in
 `protected_accounts`, so a fresh database gets the deletion guard too. [A scheduled workflow](.github/workflows/reset-demo.yml)
-runs it daily so the published demo menus stay correct.
+runs it five times a day so the published demo menus stay correct.
 
 It needs two more variables in `.env` (and, for the scheduled run, as
 repository secrets):

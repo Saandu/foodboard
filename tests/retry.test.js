@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { ATTEMPTS, isTransient, request } from '../scripts/retry.js'
 
 /**
- * The demo reset wipes before it inserts. A request that dies between the two
- * leaves the public showcase empty for hours, which is exactly what a dropped
- * connection did on 2026-09-11. These pin down what gets retried and what does
- * not.
+ * The demo reset is transactional, but its single RPC still crosses the
+ * network. A dropped response is safe to repeat because the transaction
+ * replaces the same owner-scoped rows. These pin down what gets retried.
  */
 
 const noWait = { warn: () => {}, wait: async () => {} }
