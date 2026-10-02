@@ -7,6 +7,10 @@ A multi-tenant digital menu builder: a restaurant owner designs a menu in the
 dashboard - categories, dishes, prices, allergens, translations - and publishes
 it to diners as a link or a QR code on the table.
 
+I first worked on a menu builder like this as an intern at Spark Solutions in
+Chișinău (2022-2023). That product belongs to Spark. This repository is a 2026
+rebuild written from scratch and shares no code with it.
+
 **Live demo: [foodboard-demo.web.app](https://foodboard-demo.web.app)**
 · Menus: [Trattoria Mareluna](https://foodboard-demo.web.app/menu/trattoria-mareluna)
 · [Caffè Mareluna](https://foodboard-demo.web.app/menu/caffe-mareluna)
