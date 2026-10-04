@@ -109,7 +109,11 @@ try {
     const extractionResponse = browserPage.waitForResponse(response => response.url().endsWith('/functions/v1/menu-import') && response.request().headers()['x-import-action'] === 'extract', { timeout: 100000 })
     await browserPage.getByRole('button', { name: 'Extract menu', exact: true }).click()
     const extracted = await extractionResponse
-    assert.equal(extracted.status(), 200, `Live browser extraction failed: ${await extracted.text()}`)
+    if (extracted.status() !== 200) {
+      let detail = 'response body unavailable'
+      try { detail = await extracted.text() } catch { /* Chromium can evict response bodies from its inspector cache. */ }
+      throw new Error(`Live browser extraction failed (${extracted.status()}): ${detail}`)
+    }
     await browserPage.getByLabel('Menu name', { exact: true }).waitFor()
     await browserPage.screenshot({ path: 'test-results/menu-import-live-review.png', fullPage: true })
     await browserPage.getByRole('checkbox', { name: /checked the dish names/ }).check()
