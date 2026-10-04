@@ -40,6 +40,7 @@
                            @toggle-active="toggleActive(list, $event)"
                            :name="list.name" :count="list.count" :category="list.category"
                            :active="list.active" :index="index" :display="isListVisible(list) ? 'block' : 'none'"
+                           :deleting="deletingList === list.list_id"
                            @edit-list="editList(index, list.list_id)"
                            @duplicate-list="duplicateList(index)" @delete-list="deleteList(index)" />
 
@@ -81,6 +82,7 @@ const { t } = useI18n()
 const openFeedbackModal = ref(false)
 
 const statusFilter = ref('all')
+const deletingList = ref('')
 const statusOptions = [
   { value: 'all', label: 'all' },
   { value: 'published', label: 'published' },
@@ -141,10 +143,15 @@ const duplicateList = async (index) => {
   store.lists.lists.splice(index + 1, 0, copy)
 }
 const deleteList = async (index) => {
+  if (deletingList.value) return
   const list = store.lists.lists[index]
-  if (!window.confirm(`${t('delete')} “${list.name}”?`)) return
-  await store.deleteList(list.list_id)
-  store.lists.lists.splice(index, 1)
+  if (!window.confirm(t('confirm_delete_menu', { name: list.name }))) return
+  deletingList.value = list.list_id
+  store.saveError = ''
+  try {
+    await store.deleteList(list.list_id)
+    await store.requestLists(store.selectedStructure.structure_id, true)
+  } catch { store.saveError = 'delete_failed' } finally { deletingList.value = '' }
 }
 const closeModal = async (data, index, action) => {
   if (data !== null) {

@@ -287,5 +287,12 @@
     }
   },
   "restaurants": "Restaurante",
-  "add_restaurant": "Adaugă restaurant"
+  "add_restaurant": "Adaugă restaurant",
+  "delete_menu": "Șterge meniul",
+  "delete_menu_named": "Șterge meniul {name}",
+  "delete_restaurant": "Șterge restaurantul",
+  "delete_restaurant_help": "Șterge acest restaurant și toate meniurile, categoriile și preparatele sale. Linkul public nu va mai funcționa. Acțiunea este ireversibilă.",
+  "confirm_delete_menu": "Ștergi meniul „{name}” și toate categoriile și preparatele sale? Acțiunea este ireversibilă.",
+  "confirm_delete_restaurant": "Ștergi restaurantul „{name}” și toate meniurile, categoriile și preparatele sale? Linkul public nu va mai funcționa. Acțiunea este ireversibilă.",
+  "delete_failed": "Ștergerea a eșuat. Datele pot fi încă prezente; reîncarcă pagina și încearcă din nou."
 }

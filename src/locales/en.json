@@ -287,5 +287,12 @@
     }
   },
   "restaurants": "Restaurants",
-  "add_restaurant": "Add restaurant"
+  "add_restaurant": "Add restaurant",
+  "delete_menu": "Delete menu",
+  "delete_menu_named": "Delete menu {name}",
+  "delete_restaurant": "Delete restaurant",
+  "delete_restaurant_help": "Delete this restaurant and all its menus, categories and dishes. Its public menu link will stop working. This cannot be undone.",
+  "confirm_delete_menu": "Delete menu “{name}” and all its categories and dishes? This cannot be undone.",
+  "confirm_delete_restaurant": "Delete restaurant “{name}” and all its menus, categories and dishes? Its public link will stop working. This cannot be undone.",
+  "delete_failed": "Deletion failed. Your data may still be present; refresh and try again."
 }

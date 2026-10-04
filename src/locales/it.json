@@ -287,5 +287,12 @@
     }
   },
   "restaurants": "Ristoranti",
-  "add_restaurant": "Aggiungi ristorante"
+  "add_restaurant": "Aggiungi ristorante",
+  "delete_menu": "Elimina menu",
+  "delete_menu_named": "Elimina menu {name}",
+  "delete_restaurant": "Elimina ristorante",
+  "delete_restaurant_help": "Elimina questo ristorante e tutti i suoi menu, categorie e piatti. Il link pubblico smetterà di funzionare. L’operazione è irreversibile.",
+  "confirm_delete_menu": "Eliminare il menu «{name}» e tutte le sue categorie e piatti? L’operazione è irreversibile.",
+  "confirm_delete_restaurant": "Eliminare il ristorante «{name}» e tutti i suoi menu, categorie e piatti? Il link pubblico smetterà di funzionare. L’operazione è irreversibile.",
+  "delete_failed": "Eliminazione non riuscita. I dati potrebbero essere ancora presenti; aggiorna la pagina e riprova."
 }
