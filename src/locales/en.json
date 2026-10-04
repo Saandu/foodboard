@@ -215,7 +215,7 @@
     "upload": "Upload",
     "review": "Review",
     "save_draft": "Save as draft",
-    "demo_notice": "The shared demo uses a sample. File extraction and saving are disabled here; use your own account to import.",
+    "demo_notice": "You can upload and save menus in this shared demo. Everyone shares its import quota, and demo menus are restored on scheduled resets. Use your own account to keep your menus.",
     "choose": "Choose your menu",
     "limits": "One PDF, JPG, PNG or WebP. Up to 8 MB, 5 PDF pages and 150 dishes. Use a clear, well-lit photo.",
     "file": "Menu file",
@@ -285,5 +285,7 @@
       "save_unavailable": "The save could not be confirmed. Retry the same draft to avoid duplicates.",
       "currency_mismatch": "The currencies do not match. Check the restaurant’s currency setting and the source prices before saving. No currency conversion is performed."
     }
-  }
+  },
+  "restaurants": "Restaurants",
+  "add_restaurant": "Add restaurant"
 }

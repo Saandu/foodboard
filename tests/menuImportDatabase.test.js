@@ -23,7 +23,7 @@ describe('menu import migrations in PostgreSQL', () => {
       grant usage on schema auth to authenticated;
       grant execute on function auth.uid() to authenticated;
     `)
-    for (const file of ['20260814000000_create_core_tables.sql', '20260816010000_enable_private_workspaces.sql', '20260906000000_protect_shared_accounts.sql', '20261004191254_menu_import.sql']) {
+    for (const file of ['20260814000000_create_core_tables.sql', '20260816010000_enable_private_workspaces.sql', '20260906000000_protect_shared_accounts.sql', '20261004191254_menu_import.sql', '20261004210326_allow_demo_menu_import.sql']) {
       await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
     }
     // Supabase's platform supplies the service role's core-table privileges.
@@ -46,15 +46,15 @@ describe('menu import migrations in PostgreSQL', () => {
     expect((await db.query('select is_active from public.lists')).rows).toEqual([{ is_active: false }])
     expect((await db.query('select count(*)::int as count from public.products')).rows[0].count).toBe(1)
   })
-  it('rejects another owner, a protected demo and changed retry content', async () => {
+  it('rejects another owner and changed retry content while allowing protected-demo imports', async () => {
     await expect(save(b)).rejects.toThrow('not_owner')
     await save()
     const changed = records()
     changed.list.title = 'Different title'
     await expect(save(a, changed)).rejects.toThrow('import_conflict')
     await db.exec(`reset role; insert into public.protected_accounts(user_id, reason) values ('${a}', 'demo'); set role service_role;`)
-    await expect(save()).rejects.toThrow('not_owner')
-    await expect(reserve()).rejects.toThrow('not_owner')
+    await expect(save()).resolves.toBeDefined()
+    await expect(reserve()).resolves.toBeDefined()
   })
   it('rolls back the list and categories when a product insert fails', async () => {
     const broken = records()

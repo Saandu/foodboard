@@ -37,7 +37,7 @@ npm run dev
 
 Review the dry run before applying it. If your remote database predates the migration history, reconcile that history rather than blindly applying every historical migration. The new migration is `supabase/migrations/20261004191254_menu_import.sql`. It adds private usage controls and service-only save/reservation functions, and replaces an incompatible category foreign key with an ownership check matching FoodBoard's nested category format. It preserves existing menus and records; the new product check applies to future inserts and category/owner changes.
 
-`supabase/config.toml` disables the gateway's legacy JWT check for this function. The handler still validates the bearer token using `Auth.getUser`, rejects anonymous/unconfirmed accounts, verifies restaurant ownership, and blocks protected shared accounts. Do not remove those handler checks.
+`supabase/config.toml` disables the gateway's legacy JWT check for this function. The handler still validates the bearer token using `Auth.getUser`, rejects anonymous/unconfirmed accounts, verifies restaurant ownership. Do not remove those handler checks.
 
 The frontend can be deployed through the project's existing Firebase workflow after the backend is configured. Local implementation and mocked browser tests do not establish that Gemini or the deployed function work with your key.
 
@@ -54,7 +54,7 @@ The frontend can be deployed through the project's existing Firebase workflow af
 
 The original language is preserved. No automatic translation is performed. Other language views fall back to the source text; translate later in the normal editor. Unsupported source languages need manual review under a supported language tab.
 
-The shared demo cannot call Gemini or save imports. **Try a sample** exercises the review UI without an API request. An owner using the sample can save it as a draft; sample use is clearly labelled.
+The shared demo can upload PDFs/images, call Gemini and save unpublished imports using the same ownership and quota checks as other accounts. All demo visitors share the three-attempt daily account quota. Scheduled showcase resets remove demo changes; personal accounts retain their menus. **Try a sample** exercises the review UI without an API request and can also be saved as a draft. Account deletion protection remains enabled.
 
 ## Limits, failure handling and costs
 
@@ -78,7 +78,7 @@ This version sends PDFs directly. Compare recorded prompt/output token usage and
 1. Run `npm run lint`, `npm test`, `npm run build`, and `npx playwright test e2e/menu-import.spec.js`. Database tests run the actual migration in isolated PostgreSQL via PGlite. Browser tests mock provider/backend responses and cover desktop/mobile review, consent, accessibility and saving.
 2. Typecheck the function with `npx deno check --config supabase/functions/menu-import/deno.json supabase/functions/menu-import/index.ts` and run `npx deno test --allow-env --config supabase/functions/menu-import/deno.json supabase/functions/menu-import/index_test.ts`. These backend tests mock Google and Supabase network responses and verify auth, file checks, quotas and safe saving without secrets or paid requests.
 3. On a private test account, import one clear image and one short PDF; compare every extracted price and allergen. Save and verify both menus are unpublished. Inspect them in the existing category editor; confirm portion variants survive.
-4. Test a damaged/password-protected PDF, a six-page PDF, a non-menu image, provider quota errors and an attempted second-account import. Verify the backend rejects unauthenticated calls and shared demo calls.
+4. Test a damaged/password-protected PDF, a six-page PDF, a non-menu image, provider quota errors and an attempted second-account import. Verify the backend rejects unauthenticated calls and allows owned shared-demo imports.
 5. Check token usage in Google AI Studio and the private usage table. Set suitable application quotas before broader use. Document measured extraction accuracy and latency before making CV performance claims.
 
 Release verification on **2026-10-04**: the import migration and Edge Function were deployed to the FoodBoard Supabase project, and the frontend was deployed to Firebase Hosting. Real synthetic PDF extraction and live browser image upload → review → unpublished save passed with `gemini-3.5-flash-lite`. Both tests preserved three dishes, two categories and multiple portion prices. Live authentication, ownership, quota and duplicate-save checks passed, and disposable accounts were removed. Main-branch CI and the database-security workflow passed. This validates the integration on the test fixtures; restaurant menus still require owner review.

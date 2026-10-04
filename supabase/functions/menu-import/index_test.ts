@@ -48,8 +48,8 @@ const pdf = await PDFDocument.create()
 pdf.addPage()
 const bytes = await pdf.save()
 
-Deno.test('auth, ownership and protected-account rejection spend no provider quota', async () => {
-  for (const state of ['invalid-session', 'anonymous', 'not-owner', 'demo']) {
+Deno.test('auth and ownership rejection spend no provider quota', async () => {
+  for (const state of ['invalid-session', 'anonymous', 'not-owner']) {
     reset(state)
     const response = await handler(request(bytes))
     assert.ok([401, 403].includes(response.status))
@@ -105,4 +105,12 @@ Deno.test('save rejects missing prices and currency mismatches independently of 
   assert.deepEqual(await (await handler(request(JSON.stringify(missing), 'save'))).json(), { error: 'invalid_prices' })
   assert.deepEqual(await (await handler(request(JSON.stringify({ ...draft, currency: 'USD' }), 'save'))).json(), { error: 'currency_mismatch' })
   assert.equal(capturedSave, null)
+})
+
+Deno.test('shared-demo owners can extract and save with normal quota enforcement', async () => {
+  reset('demo')
+  assert.equal((await handler(request(bytes))).status, 200)
+  assert.equal(providerCalls, 1)
+  assert.equal(reservationCalls, 1)
+  assert.equal((await handler(request(JSON.stringify(draft), 'save'))).status, 200)
 })

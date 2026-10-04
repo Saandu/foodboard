@@ -12,25 +12,27 @@
         <li :aria-current="draft ? 'step' : undefined">2. {{ $t('menu_import.review') }}</li>
         <li>3. {{ $t('menu_import.save_draft') }}</li>
       </ol>
-      <p v-if="demo" class="import-notice">{{ $t('menu_import.demo_notice') }}</p>
+      <section v-if="demo" class="import-notice demo-import">
+        <p>{{ $t('menu_import.demo_notice') }}</p>
+      </section>
       <p v-if="error" class="import-error" role="alert">{{ error }}</p>
       <div v-if="!draft" class="upload-section">
         <h2>{{ $t('menu_import.choose') }}</h2>
         <p>{{ $t('menu_import.limits') }}</p>
         <label class="upload-picker">
           <span>{{ $t('menu_import.file') }}</span>
-          <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" :disabled="busy || demo" @change="selectFile">
+          <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" :disabled="busy" @change="selectFile">
         </label>
         <p v-if="file">{{ file.name }} · {{ (file.size / 1024 / 1024).toFixed(1) }} MB</p>
-        <label class="check-line"><input v-model="consent" type="checkbox" :disabled="busy || demo"> {{ $t('menu_import.consent') }}</label>
+        <label class="check-line"><input v-model="consent" type="checkbox" :disabled="busy"> {{ $t('menu_import.consent') }}</label>
         <p class="import-muted">{{ $t('menu_import.privacy') }}</p>
         <div class="import-actions">
-          <button type="button" class="btn btn-primary" :disabled="!file || !consent || busy || demo" @click="extract">{{ busy ? $t('menu_import.extracting') : $t('menu_import.extract') }}</button>
+          <button type="button" class="btn btn-primary" :disabled="!file || !consent || busy" @click="extract">{{ busy ? $t('menu_import.extracting') : $t('menu_import.extract') }}</button>
           <button type="button" class="btn btn-quiet" :disabled="busy" @click="loadSample">{{ $t('menu_import.sample') }}</button>
         </div>
         <p v-if="busy" role="status" aria-live="polite">{{ $t('menu_import.wait') }}</p>
       </div>
-      <div v-else class="review-layout" :aria-busy="busy">
+      <div v-else-if="draft" class="review-layout" :aria-busy="busy">
         <aside class="source-panel">
           <h2>{{ $t('menu_import.source') }}</h2>
           <img v-if="previewUrl && file?.type.startsWith('image/')" :src="previewUrl" :alt="$t('menu_import.source')">
@@ -77,7 +79,7 @@
             <p>{{ $t('menu_import.unpublished') }}</p>
           </fieldset>
           <p v-if="saveAttempted && !busy" class="import-notice" role="status">{{ $t('menu_import.save_pending') }}</p>
-          <button class="btn btn-primary" type="submit" :disabled="!canSave || demo">{{ busy ? $t('menu_import.saving') : $t(saveAttempted ? 'menu_import.retry_save' : 'menu_import.save_draft') }}</button>
+          <button class="btn btn-primary" type="submit" :disabled="!canSave">{{ busy ? $t('menu_import.saving') : $t(saveAttempted ? 'menu_import.retry_save' : 'menu_import.save_draft') }}</button>
         </form>
       </div>
     </template>
@@ -133,7 +135,7 @@ function selectFile (event) {
   previewUrl.value = URL.createObjectURL(selected)
 }
 async function extract () {
-  if (!file.value || !consent.value || !structure.value || busy.value || demo.value) return
+  if (!file.value || !consent.value || !structure.value || busy.value) return
   busy.value = true
   error.value = ''
   importId = crypto.randomUUID()
@@ -163,7 +165,7 @@ function removeItem (categoryIndex, itemIndex) {
   if (!category.items.length) draft.value.categories.splice(categoryIndex, 1)
 }
 async function save () {
-  if (!canSave.value || demo.value) return
+  if (!canSave.value) return
   error.value = ''
   let checked
   try { checked = validateDraft(draft.value) } catch (failure) { showError(failure); return }
