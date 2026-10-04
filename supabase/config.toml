@@ -1,0 +1,6 @@
+project_id = "foodboard"
+
+[functions.menu-import]
+# The handler validates the bearer token with Auth.getUser and checks ownership.
+# Required for projects using publishable keys rather than legacy JWT API keys.
+verify_jwt = false

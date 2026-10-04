@@ -1,7 +1,7 @@
 <template>
   <div v-if="!isPublicPage && appReady">
     <TheMainHeader />
-    <PageContentHeader />
+    <PageContentHeader v-if="route.name !== 'MenuImportPage'" />
   </div>
   <router-view v-if="isPublicPage || appReady" />
   <TheMainFooter v-if="!isPublicPage && appReady" />
