@@ -4,16 +4,15 @@ import { clone } from '../clone.js'
 import { removeAllStructureMedia, removeStructureImages } from '../media.js'
 import { normalizeStructure, blankStructure, unwrapTabs, DEFAULT_COLOR_MAIN, DEFAULT_COLOR_BACKGROUND } from '../structureShape.js'
 import { deleteAccount as deleteAccountRow, fetchUser } from '../api/users.js'
-import { fetchStructures, insertStructure, rotatePublicSlug as rotateSlug, upsertStructure } from '../api/structures.js'
+import { deleteStructure as deleteStructureRow, fetchStructures, insertStructure, rotatePublicSlug as rotateSlug, upsertStructure } from '../api/structures.js'
 import { deleteList as deleteListRow, fetchLists, insertList, upsertList } from '../api/lists.js'
 import {
-  deleteCategoriesForList,
   fetchCategories,
   fetchCategoryGroup,
   insertCategories,
   upsertCategories
 } from '../api/categories.js'
-import { deleteProducts as deleteProductRows, deleteProductsIn, fetchProducts, upsertProducts } from '../api/products.js'
+import { deleteProducts as deleteProductRows, fetchProducts, upsertProducts } from '../api/products.js'
 import { insertFeedback } from '../api/feedback.js'
 
 /** In-flight bootstrap, so concurrent navigations share one round trip.
@@ -301,14 +300,28 @@ export const useStore = defineStore('store', {
     },
 
     async deleteList (listId) {
-      const groups = await fetchCategoryGroup(listId)
-      const categoryIds = (groups || [])
-        .flatMap(group => (group.category?.categories || []).map(category => category.category_id))
-        .filter(Boolean)
-
-      await deleteProductsIn(categoryIds)
-      await deleteCategoriesForList(listId)
       await deleteListRow(listId)
+      this.categoriesByList = {}
+      this.productsByCategory = {}
+      if (this.list_id === listId) this.list_id = ''
+    },
+
+    async deleteStructure (structureId) {
+      await deleteStructureRow(structureId)
+      this.structures = this.structures.filter(entry => entry.structure_id !== structureId)
+      delete this.listsByStructure[structureId]
+      this.categoriesByList = {}
+      this.productsByCategory = {}
+      this.selectedStructure = this.structures[0] || null
+      this.list_id = ''
+      this.lists = { structure_id: '', lists: [], addModal: [] }
+      this.pendingMediaRemovals = []
+      this.structureSaved = false
+      this.saveError = ''
+      if (this.selectedStructure) {
+        this.updateTabs()
+        await this.requestLists(this.selectedStructure.structure_id, true)
+      }
     },
 
     /**

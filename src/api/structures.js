@@ -3,6 +3,11 @@
 import { supabase } from '../supabase.js'
 import { rows } from './query.js'
 
+export async function deleteStructure (structureId) {
+  const { error } = await supabase.rpc('delete_restaurant_workspace', { p_structure_id: structureId })
+  if (error) throw new Error(`Could not delete the restaurant: ${error.message}`, { cause: error })
+}
+
 /** Every restaurant owned by an account, oldest first. */
 export function fetchStructures (userId) {
   return rows(

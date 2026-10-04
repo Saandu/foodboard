@@ -23,7 +23,7 @@ describe('menu import migrations in PostgreSQL', () => {
       grant usage on schema auth to authenticated;
       grant execute on function auth.uid() to authenticated;
     `)
-    for (const file of ['20260814000000_create_core_tables.sql', '20260816010000_enable_private_workspaces.sql', '20260906000000_protect_shared_accounts.sql', '20261004191254_menu_import.sql', '20261004210326_allow_demo_menu_import.sql']) {
+    for (const file of ['20260814000000_create_core_tables.sql', '20260816010000_enable_private_workspaces.sql', '20260906000000_protect_shared_accounts.sql', '20261004191254_menu_import.sql', '20261004210326_allow_demo_menu_import.sql', '20261004212307_workspace_deletion.sql']) {
       await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
     }
     // Supabase's platform supplies the service role's core-table privileges.
@@ -45,6 +45,41 @@ describe('menu import migrations in PostgreSQL', () => {
     expect(first.rows[0].result).toEqual(retry.rows[0].result)
     expect((await db.query('select is_active from public.lists')).rows).toEqual([{ is_active: false }])
     expect((await db.query('select count(*)::int as count from public.products')).rows[0].count).toBe(1)
+  })
+  it('deletes an owned menu and nested dishes while denying another owner', async () => {
+    await save()
+    await db.exec(`reset role; set role authenticated; select set_config('request.jwt.claim.sub', '${b}', false);`)
+    await expect(db.query('select public.delete_menu_workspace($1)', [`${importId}-0`])).rejects.toThrow('not_owner')
+    await db.exec(`select set_config('request.jwt.claim.sub', '${a}', false);`)
+    await db.query('select public.delete_menu_workspace($1)', [`${importId}-0`])
+    expect((await db.query('select count(*)::int as count from public.products')).rows[0].count).toBe(0)
+    expect((await db.query('select count(*)::int as count from public.lists')).rows[0].count).toBe(0)
+    expect((await db.query('select count(*)::int as count from public.structures')).rows[0].count).toBe(1)
+  })
+  it('rolls back all deletion when a nested delete fails', async () => {
+    await save()
+    await db.exec(`reset role;
+      create function public.fail_category_delete() returns trigger language plpgsql as $$ begin raise exception 'test_failure'; end $$;
+      create trigger test_delete_failure before delete on public.categories for each row execute function public.fail_category_delete();
+      set role authenticated; select set_config('request.jwt.claim.sub', '${a}', false);`)
+    try {
+      await expect(db.query('select public.delete_menu_workspace($1)', [`${importId}-0`])).rejects.toThrow('test_failure')
+      expect((await db.query('select count(*)::int as count from public.products')).rows[0].count).toBe(1)
+      expect((await db.query('select count(*)::int as count from public.lists')).rows[0].count).toBe(1)
+    } finally {
+      await db.exec('reset role; drop trigger test_delete_failure on public.categories; drop function public.fail_category_delete();')
+    }
+  })
+  it('deletes a restaurant and its menus while preserving another owner', async () => {
+    await save()
+    await db.exec(`reset role; set role authenticated; select set_config('request.jwt.claim.sub', '${b}', false);`)
+    await expect(db.query("select public.delete_restaurant_workspace('a-restaurant')")).rejects.toThrow('not_owner')
+    await db.exec(`select set_config('request.jwt.claim.sub', '${a}', false);`)
+    await db.query("select public.delete_restaurant_workspace('a-restaurant')")
+    expect((await db.query('select count(*)::int as count from public.products')).rows[0].count).toBe(0)
+    await db.exec(`select set_config('request.jwt.claim.sub', '${b}', false);`)
+    expect((await db.query('select structure_id from public.structures')).rows).toEqual([{ structure_id: 'b-restaurant' }])
+    await db.exec(`reset role; insert into public.structures(structure_id,user_id) values ('a-restaurant','${a}');`)
   })
   it('rejects another owner and changed retry content while allowing protected-demo imports', async () => {
     await expect(save(b)).rejects.toThrow('not_owner')

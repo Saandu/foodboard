@@ -7,7 +7,7 @@ import { buildMenuRecords } from '../supabase/functions/_shared/menu-records.js'
 const owner = '11111111-1111-4111-8111-111111111111'
 const menu = () => ({ title: 'Lunch menu', language: 'en', currency: 'EUR', warnings: [], categories: [{ name: 'Main courses', description: '', items: [{ name: 'Garden pasta', description: 'Tomatoes and basil', prices: [{ amount: '12.50', label: 'Small' }, { amount: '18.00', label: 'Large' }], allergens: [6], warning: '' }] }] })
 
-async function workspace (page, { demo = false, path = '/import-menu?structure_id=test-restaurant' } = {}) {
+async function workspace (page, { demo = false, path = '/import-menu?structure_id=test-restaurant', menus = [] } = {}) {
   const url = process.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
   const ref = new URL(url).hostname.split('.')[0]
   const session = {
@@ -16,7 +16,8 @@ async function workspace (page, { demo = false, path = '/import-menu?structure_i
     user: { id: owner, email: demo ? process.env.VITE_DEMO_EMAIL : 'owner@example.test', user_metadata: {} }
   }
   await page.addInitScript(({ ref, session }) => { localStorage.setItem(`sb-${ref}-auth-token`, JSON.stringify(session)) }, { ref, session })
-  const lists = []
+  const lists = menus
+  let restaurants = [{ structure_id: 'test-restaurant', user_id: owner, title: 'Test restaurant', structure: { currency: '€', language_main: 'en', languages: ['en', 'ro'] } }]
   const calls = []
   await page.route(`${url}/**`, async route => {
     const request = route.request()
@@ -24,8 +25,19 @@ async function workspace (page, { demo = false, path = '/import-menu?structure_i
     let result = []
     if (path.includes('/auth/')) result = session.user
     else if (path.endsWith('/users')) result = { user_id: owner, name: 'Test owner', settings: {}, notifications: [] }
-    else if (path.endsWith('/structures')) result = [{ structure_id: 'test-restaurant', user_id: owner, title: 'Test restaurant', structure: { currency: '€', language_main: 'en', languages: ['en', 'ro'] } }]
+    else if (path.endsWith('/structures')) result = restaurants
     else if (path.endsWith('/lists')) result = lists
+    else if (path.endsWith('/delete_menu_workspace')) {
+      const id = JSON.parse(request.postData()).p_list_id
+      lists.splice(lists.findIndex(row => row.list_id === id), 1)
+      calls.push({ action: 'delete-menu', id })
+      result = null
+    } else if (path.endsWith('/delete_restaurant_workspace')) {
+      const id = JSON.parse(request.postData()).p_structure_id
+      restaurants = restaurants.filter(row => row.structure_id !== id)
+      calls.push({ action: 'delete-restaurant', id })
+      result = null
+    }
     else if (path.endsWith('/menu-import')) {
       const action = request.headers()['x-import-action']
       calls.push({ action, id: request.headers()['x-import-id'], body: request.postData() })
@@ -41,6 +53,38 @@ async function workspace (page, { demo = false, path = '/import-menu?structure_i
   await page.goto(path)
   return calls
 }
+
+test('menu deletion is visible, cancellation preserves it and confirmation removes it', async ({ page }) => {
+  const records = buildMenuRecords(menu(), 'test-restaurant', owner, () => 'saved-menu')
+  const calls = await workspace(page, { path: '/lists?structure_id=test-restaurant', menus: [records.list] })
+  const remove = page.getByRole('button', { name: 'Delete menu Lunch menu', exact: true })
+  await expect(remove).toBeVisible()
+  await accessible(page)
+  page.once('dialog', async dialog => { expect(dialog.message()).toContain('cannot be undone'); await dialog.dismiss() })
+  await remove.click()
+  await expect(remove).toBeVisible()
+  expect(calls).toEqual([])
+  page.once('dialog', dialog => dialog.accept())
+  await remove.click()
+  await expect(page.getByRole('button', { name: 'Create your first menu', exact: true })).toBeVisible()
+  expect(calls).toEqual([{ action: 'delete-menu', id: 'saved-menu' }])
+})
+
+test('restaurant deletion confirms its scope and returns to an empty dashboard', async ({ page }) => {
+  const calls = await workspace(page, { path: '/structures' })
+  const remove = page.getByRole('button', { name: 'Delete restaurant', exact: true })
+  await expect(remove).toBeVisible()
+  await accessible(page)
+  page.once('dialog', async dialog => { expect(dialog.message()).toContain('Test restaurant'); await dialog.dismiss() })
+  await remove.click()
+  await expect(remove).toBeVisible()
+  expect(calls).toEqual([])
+  page.once('dialog', dialog => dialog.accept())
+  await remove.click()
+  await expect(remove).toHaveCount(0)
+  await expect(page.locator('.workspace-empty')).toBeVisible()
+  expect(calls).toEqual([{ action: 'delete-restaurant', id: 'test-restaurant' }])
+})
 
 test('first dashboard exposes a direct import shortcut for its restaurant', async ({ page }, testInfo) => {
   await workspace(page, { path: '/structures' })
