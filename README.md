@@ -439,3 +439,6 @@ Reuse, modification and redistribution require prior written permission,
 except where applicable law or GitHub's Terms of Service permit otherwise.
 Third-party dependencies and materials retain their own licenses.
 See [LICENSE](LICENSE) for the full notice and permission requests.
+## AI menu import
+
+Owners can import a PDF or menu photo, review Gemini's extracted categories and dishes, and save a new unpublished menu. The key stays in a Supabase Edge Function. See [setup, API key location and workflow](docs/menu-import.md) before enabling the backend.

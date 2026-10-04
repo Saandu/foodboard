@@ -11,7 +11,12 @@
 
 /** A tab counts as translated only once some field actually carries text. */
 export const hasContent = (tab) =>
-  Array.isArray(tab) && tab.some(field => field.value && field.value.length)
+  Array.isArray(tab) && tab.some(field => {
+    if (typeof field.value === 'string') return Boolean(field.value.trim())
+    // Price amounts are shared across languages and do not constitute a
+    // translation. Empty description arrays must not suppress source fallback.
+    return field.type === 'description_rows' && Array.isArray(field.value) && field.value.some(row => typeof row.value === 'string' && row.value.trim())
+  })
 
 /**
  * Picks the tab to render: the requested language when it has been filled in,

@@ -33,6 +33,13 @@ jobs:
         # workflow runs those live assertions with disposable credentials.
         run: npm test
 
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: '2.9.6'
+
+      - name: Menu import backend tests
+        run: deno test --allow-env --config supabase/functions/menu-import/deno.json supabase/functions/menu-import/index_test.ts
+
       - name: Build
         run: npm run build
 

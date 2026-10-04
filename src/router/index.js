@@ -46,6 +46,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/import-menu',
+    name: 'MenuImportPage',
+    component: () => import('../views/MenuImportPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/categories',
     name: 'CategoriesProductsPage',
     component: () => import('../views/CategoriesProductsPage.vue'),

@@ -55,11 +55,11 @@
                 <div class="dish__line">
                   <h3 class="dish__name">{{ productTitle(item) }}</h3>
                   <span class="dish__leader" aria-hidden="true"></span>
-                  <span class="dish__price" v-if="productPrice(item)">
-                    {{ productPrice(item) }}<span class="dish__cur">{{ currency }}</span>
-                    <small class="dish__suffix" v-if="productPriceSuffix(item)">
-                      {{ productPriceSuffix(item) }}
-                    </small>
+                  <span class="dish__prices" v-if="productPrices(item).length">
+                    <span v-for="(price, priceIndex) in productPrices(item)" :key="priceIndex" class="dish__price">
+                      {{ price.value }}<span class="dish__cur">{{ currency }}</span>
+                      <small class="dish__suffix" v-if="price.suffix">{{ price.suffix }}</small>
+                    </span>
                   </span>
                 </div>
 
@@ -345,11 +345,8 @@ const productDescription = (item) => {
   return fieldValue(tab, 'Descrizione')
 }
 
-const priceField = (item) =>
-  tabFor(item?.editModal?.[0]?.tabs)?.find(f => f.type === 'prices')?.value?.[0]
-
-const productPrice = (item) => priceField(item)?.value || ''
-const productPriceSuffix = (item) => priceField(item)?.suffix || ''
+const productPrices = (item) =>
+  (tabFor(item?.editModal?.[0]?.tabs)?.find(f => f.type === 'prices')?.value || []).filter(price => price.value)
 
 /** The dish's own picture, empty when unset or switched off by the owner. */
 const productPhoto = (item) => descriptorImage(item?.editModal)
@@ -663,6 +660,8 @@ const productAllergens = (item) => {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+.dish__prices { display: flex; flex-direction: column; align-items: end; gap: 6px; }
 
 .dish__cur { margin-left: 2px; font-weight: 600; color: var(--ink-soft); }
 

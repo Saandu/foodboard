@@ -28,7 +28,10 @@
         <div class="main-content">
           <div class="page-toolbar">
             <div><h1>{{ $t('lists') }}</h1><p>{{ $t('list_name') }}</p></div>
-            <button type="button" class="btn btn-primary" @click="addList(-1)">{{ $t('add_list') }}</button>
+            <div class="toolbar-actions">
+              <RouterLink class="btn btn-quiet" :to="{ path: '/import-menu', query: { structure_id: store.selectedStructure?.structure_id } }">{{ $t('menu_import.open') }}</RouterLink>
+              <button type="button" class="btn btn-primary" @click="addList(-1)">{{ $t('add_list') }}</button>
+            </div>
           </div>
           <div class="list-table">
             <p v-if="store.saveError" class="save-error" role="alert">{{ $t(store.saveError) }}</p>
@@ -87,7 +90,7 @@ const isListVisible = (list) => statusFilter.value === 'all' ||
   (statusFilter.value === 'published' ? list.active : !list.active)
 
 const openModal = ref(false)
-const modalData = ref({})
+const modalData = ref([])
 const listIndex = ref(-1)
 const action = ref('add')
 const currentList_id = ref('')
@@ -189,6 +192,7 @@ const closeFeedbackModal = () => {
 </script>
 
 <style scoped>
+.toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
 input[type="checkbox"]:checked {
   accent-color: #E6E5E1;
 }
