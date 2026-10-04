@@ -34,7 +34,7 @@ test('the one-click demo reaches its private workspace', async ({ page }) => {
   await page.goto('/login')
   await page.getByRole('button', { name: 'Enter demo' }).click()
   await expect(page).toHaveURL(/\/structures(?:\?.*)?$/, { timeout: 15000 })
-  await expect(page.getByText('My menus', { exact: true })).toBeVisible()
+  await expect(page.getByText('Restaurants', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Add restaurant' })).toBeVisible()
   await expectAccessible(page)
 })
