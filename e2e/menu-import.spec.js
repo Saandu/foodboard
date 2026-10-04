@@ -7,13 +7,13 @@ import { buildMenuRecords } from '../supabase/functions/_shared/menu-records.js'
 const owner = '11111111-1111-4111-8111-111111111111'
 const menu = () => ({ title: 'Lunch menu', language: 'en', currency: 'EUR', warnings: [], categories: [{ name: 'Main courses', description: '', items: [{ name: 'Garden pasta', description: 'Tomatoes and basil', prices: [{ amount: '12.50', label: 'Small' }, { amount: '18.00', label: 'Large' }], allergens: [6], warning: '' }] }] })
 
-async function workspace (page) {
+async function workspace (page, { demo = false, path = '/import-menu?structure_id=test-restaurant' } = {}) {
   const url = process.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
   const ref = new URL(url).hostname.split('.')[0]
   const session = {
     access_token: `fake.${Buffer.from(JSON.stringify({ sub: owner, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.signature`,
     refresh_token: 'fake-refresh-token', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, token_type: 'bearer',
-    user: { id: owner, email: 'owner@example.test', user_metadata: {} }
+    user: { id: owner, email: demo ? process.env.VITE_DEMO_EMAIL : 'owner@example.test', user_metadata: {} }
   }
   await page.addInitScript(({ ref, session }) => { localStorage.setItem(`sb-${ref}-auth-token`, JSON.stringify(session)) }, { ref, session })
   const lists = []
@@ -38,9 +38,34 @@ async function workspace (page) {
     }
     await route.fulfill({ json: result })
   })
-  await page.goto('/import-menu?structure_id=test-restaurant')
+  await page.goto(path)
   return calls
 }
+
+test('first dashboard exposes a direct import shortcut for its restaurant', async ({ page }, testInfo) => {
+  await workspace(page, { path: '/structures' })
+  const shortcut = page.getByRole('link', { name: 'Import from PDF or photo', exact: true })
+  await expect(shortcut).toBeVisible()
+  await expect(shortcut).toHaveAttribute('href', '/import-menu?structure_id=test-restaurant')
+  await accessible(page)
+  await page.screenshot({ path: testInfo.outputPath('dashboard-import.png'), fullPage: true })
+  await shortcut.click()
+  await expect(page.locator('input[type=file]')).toBeEnabled()
+})
+
+test('shared demo uploads, extracts and saves a draft', async ({ page }) => {
+  test.skip(!process.env.VITE_DEMO_EMAIL || !process.env.VITE_DEMO_PASSWORD, 'Demo credentials are not configured')
+  const calls = await workspace(page, { demo: true })
+  await expect(page.locator('input[type=file]')).toBeEnabled()
+  await page.locator('input[type=file]').setInputFiles({ name: 'menu.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7 test menu') })
+  await page.getByRole('checkbox', { name: /permission to send/ }).check()
+  await page.getByRole('button', { name: 'Extract menu', exact: true }).click()
+  await page.getByRole('checkbox', { name: /checked the dish names/ }).check()
+  await page.getByRole('button', { name: 'Save as draft', exact: true }).click()
+  await expect(page).toHaveURL(/\/lists\?structure_id=test-restaurant/)
+  await expect(page.getByText('Lunch menu', { exact: true })).toBeVisible()
+  expect(calls.map(call => call.action)).toEqual(['extract', 'save'])
+})
 
 async function accessible (page) {
   const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()

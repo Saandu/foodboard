@@ -32,9 +32,6 @@ Deno.serve(async request => {
   const { data: structure, error: ownerError } = await admin.from('structures').select('structure_id, structure').eq('structure_id', structureId).eq('user_id', user.id).maybeSingle()
   if (ownerError) return reply(503, { error: 'save_unavailable' })
   if (!structure) return reply(403, { error: 'not_owner' })
-  const { data: protectedAccount, error: protectionError } = await admin.from('protected_accounts').select('user_id').eq('user_id', user.id).maybeSingle()
-  if (protectionError) return reply(503, { error: 'save_unavailable' })
-  if (protectedAccount) return reply(403, { error: 'demo_import_disabled' })
   try {
     const action = request.headers.get('x-import-action')
     if (action === 'save') {

@@ -4,7 +4,7 @@
       <div class="workspace-context">
         <details class="structure-picker">
           <summary class="structure-picker__trigger">
-            <span class="structure-picker__label">{{ $t('structures') }}</span>
+            <span class="structure-picker__label">{{ $t('restaurants') }}</span>
             <strong>{{ store.selectedStructure?.title }}</strong>
             <font-awesome-icon icon="fa-solid fa-angle-down" aria-hidden="true" />
           </summary>
@@ -18,8 +18,11 @@
         </details>
 
         <nav class="workspace-nav" :aria-label="$t('settings')">
-          <router-link :to="listsRoute" :class="{ 'is-active': route.path === '/lists' || route.path === '/categories' }">
+          <router-link class="btn btn-quiet" :to="listsRoute" :class="{ 'is-active': route.path === '/lists' || route.path === '/categories' }">
             {{ $t('lists') }}
+          </router-link>
+          <router-link v-if="store.selectedStructure" class="btn btn-quiet" :to="{ path: '/import-menu', query: { structure_id: store.selectedStructure.structure_id } }">
+            {{ $t('menu_import.open') }}
           </router-link>
           <router-link :to="settingsRoute" :class="{ 'is-active': route.path === '/structures' }">
             {{ $t('settings') }}
@@ -28,7 +31,7 @@
 
         <div class="workspace-actions">
           <button type="button" class="btn btn-primary" :disabled="creating" @click="createMenu">
-            {{ $t(creating ? 'creating' : 'add_menu') }}
+            {{ $t(creating ? 'creating' : 'add_restaurant') }}
           </button>
           <button type="button" class="btn btn-quiet" @click="store.isQrOpen = true">QR</button>
           <button type="button" class="btn btn-quiet" @click="openWebPreview">
@@ -100,11 +103,12 @@ const switchStructure = async (index) => {
 .structure-picker__menu { position: absolute; top: calc(100% + var(--s-2)); left: 0; z-index: var(--z-dropdown); min-width: 240px; padding: var(--s-1); background: var(--c-surface); border: 1px solid var(--c-line-strong); border-radius: var(--r-md); box-shadow: var(--shadow-sm); }
 .structure-picker__menu button { display: block; width: 100%; min-height: 44px; padding: 0 var(--s-3); color: var(--c-ink-2); text-align: left; font: 600 .9rem/1.2 inherit; background: transparent; border: 0; border-radius: var(--r-sm); cursor: pointer; }
 .structure-picker__menu button:hover, .structure-picker__menu button.is-current { color: var(--c-ink); background: var(--c-brand-soft); }
-.workspace-nav { display: flex; align-items: center; gap: var(--s-1); margin-left: auto; }
+.workspace-nav { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2); margin-left: auto; }
 .workspace-nav a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 var(--s-3); color: var(--c-ink-2); font-size: .875rem; font-weight: 650; border-radius: var(--r-sm); }
 .workspace-nav a:hover { color: var(--c-ink); background: var(--c-line-2); }
-.workspace-nav a.is-active { color: var(--c-brand); background: var(--c-brand-soft); }
-.workspace-actions { display: flex; align-items: center; gap: var(--s-2); }
+.workspace-nav a.is-active { color: white; background: var(--c-brand); border-color: var(--c-brand); }
+.workspace-actions { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+@media (min-width: 681px) and (max-width: 1100px) { .workspace-context { flex-wrap: wrap; } .workspace-actions { width: 100%; } }
 @media (max-width: 680px) { .workspace-context { flex-wrap: wrap; gap: var(--s-3); } .structure-picker { flex: 1 1 100%; } .workspace-nav { order: 3; margin-left: 0; } .workspace-actions { margin-left: auto; } }
 @media (max-width: 420px) { .workspace-nav { flex: 1 1 auto; } .workspace-nav a { flex: 1; justify-content: center; } .workspace-actions { width: 100%; margin-left: 0; } .workspace-actions .btn { flex: 1; } }
 </style>

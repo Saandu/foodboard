@@ -215,7 +215,7 @@
     "upload": "Încarcă",
     "review": "Verifică",
     "save_draft": "Salvează ca ciornă",
-    "demo_notice": "Contul demo folosește un exemplu. Pentru extragere și salvare, folosește contul tău.",
+    "demo_notice": "Poți încărca și salva meniuri în acest demo comun. Cota de import este comună, iar meniurile demo sunt restaurate periodic. Folosește contul tău pentru a păstra meniurile.",
     "choose": "Alege meniul",
     "limits": "Un PDF, JPG, PNG sau WebP. Maximum 8 MB, 5 pagini PDF și 150 de preparate. Folosește o fotografie clară.",
     "file": "Fișierul meniului",
@@ -285,5 +285,7 @@
       "save_unavailable": "Salvarea nu a putut fi confirmată. Reîncearcă aceeași ciornă pentru a evita duplicatele.",
       "currency_mismatch": "Monedele nu corespund. Verifică setările restaurantului și prețurile originale. Nu se efectuează conversii valutare."
     }
-  }
+  },
+  "restaurants": "Restaurante",
+  "add_restaurant": "Adaugă restaurant"
 }

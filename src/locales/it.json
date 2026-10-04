@@ -215,7 +215,7 @@
     "upload": "Carica",
     "review": "Controlla",
     "save_draft": "Salva come bozza",
-    "demo_notice": "L’account demo usa un esempio. Per estrarre e salvare un menu, usa il tuo account.",
+    "demo_notice": "Puoi caricare e salvare menu in questa demo condivisa. La quota di importazione è condivisa e i menu demo vengono ripristinati periodicamente. Usa il tuo account per conservare i menu.",
     "choose": "Scegli il menu",
     "limits": "Un PDF, JPG, PNG o WebP. Massimo 8 MB, 5 pagine PDF e 150 piatti. Usa una foto nitida.",
     "file": "File del menu",
@@ -285,5 +285,7 @@
       "save_unavailable": "Salvataggio non confermato. Riprova la stessa bozza per evitare duplicati.",
       "currency_mismatch": "Le valute non coincidono. Controlla la valuta del ristorante e i prezzi originali. Non viene effettuata alcuna conversione."
     }
-  }
+  },
+  "restaurants": "Ristoranti",
+  "add_restaurant": "Aggiungi ristorante"
 }

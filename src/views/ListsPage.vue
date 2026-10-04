@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useStore } from '../stores/store.js'
 import { useRoute, useRouter } from 'vue-router'
 import ListShortData from '../components/ListShortData.vue'
@@ -96,15 +96,15 @@ const action = ref('add')
 const currentList_id = ref('')
 
 
-onBeforeMount(async () => {
+watch(() => route.query.structure_id, async () => {
   window.scrollTo(0, 0)
   const requested = route.query.structure_id
   const selected = store.structures.find(structure => structure.structure_id === requested) || store.selectedStructure || store.structures[0]
   if (!selected) return
   store.selectedStructure = selected
-  await store.requestLists(selected.structure_id)
+  await store.requestLists(selected.structure_id, true)
   if (requested !== selected.structure_id) await router.replace({ path: '/lists', query: { structure_id: selected.structure_id } })
-})
+}, { immediate: true })
 
 const backToStructures = async () => {
   await router.push({
