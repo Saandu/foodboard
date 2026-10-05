@@ -31,7 +31,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadEnv } from './env.js'
-import { descriptionFor, render, sitemap } from './prerender-lib.mjs'
+import { descriptionFor, isSafeSlug, render, sitemap } from './prerender-lib.mjs'
 
 loadEnv()
 
@@ -67,6 +67,13 @@ async function main () {
 
   for (const row of rows || []) {
     if (!row.public_slug) continue
+    // The slug becomes a file name below. Owners could once write any string
+    // into it, so a row that does not look like an issued slug is skipped, not
+    // trusted: '../index' would overwrite the site's own index.html.
+    if (!isSafeSlug(row.public_slug)) {
+      console.warn(`  skipped ${JSON.stringify(row.public_slug)} — not a valid public slug`)
+      continue
+    }
 
     // Only menus a diner can actually open. get_public_menu returns null when
     // no list is active, and prerendering an unpublished menu would put the

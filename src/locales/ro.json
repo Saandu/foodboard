@@ -199,6 +199,7 @@
   "reset_mismatch": "Parolele nu coincid.",
   "reset_done": "Parolă actualizată. Te ducem în spațiul tău de lucru…",
   "reset_invalid": "Acest link este invalid sau a expirat. Solicită unul nou mai jos.",
+  "reset_demo_protected": "Parola contului demo comun nu poate fi schimbată. Înregistrează-te pentru propriul spațiu de lucru.",
   "reset_error": "Nu am putut actualiza parola. Solicită alt link și încearcă din nou.",
   "reset_request_new": "Solicită un link nou",
   "home_navigation": "Navigarea paginii principale",

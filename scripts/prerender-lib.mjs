@@ -8,6 +8,14 @@
 
 import { tabFor } from '../src/menuTranslations.js'
 
+/**
+ * The shape generate_public_slug() issues, plus the readable demo slugs. The
+ * slug becomes a file name and a URL path segment, so anything else is refused
+ * rather than escaped: a slug of '../index' would otherwise overwrite
+ * dist/index.html.
+ */
+export const isSafeSlug = (slug) => typeof slug === 'string' && /^[a-z0-9-]{1,64}$/.test(slug)
+
 export const escapeHtml = (value) => String(value)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
@@ -88,7 +96,7 @@ export const render = (template, menu, origin) => {
 
   return html.replace(
     '</head>',
-    `    <link rel="canonical" href="${origin}/menu/${slug}"/>\n` +
+    `    <link rel="canonical" href="${escapeHtml(`${origin}/menu/${slug}`)}"/>\n` +
     `    <script type="application/ld+json">${jsonLdScript(jsonLd)}</script>\n</head>`
   )
 }
@@ -97,7 +105,7 @@ export const sitemap = (slugs, origin) => [
   '<?xml version="1.0" encoding="UTF-8"?>',
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
   `  <url><loc>${origin}/</loc><priority>0.8</priority></url>`,
-  ...slugs.map(slug => `  <url><loc>${origin}/menu/${slug}</loc><priority>1.0</priority></url>`),
+  ...slugs.map(slug => `  <url><loc>${escapeHtml(`${origin}/menu/${slug}`)}</loc><priority>1.0</priority></url>`),
   '</urlset>',
   ''
 ].join('\n')

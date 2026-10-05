@@ -29,6 +29,7 @@ import LanguagePicker from '../components/LanguagePicker.vue'
 import { UI_LANGUAGES } from '../uiLanguages.js'
 import { useRouter } from 'vue-router'
 import { supabase } from '../supabase.js'
+import { isDemoUser } from '../demo.js'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -43,6 +44,13 @@ let authSubscription
 
 const setRecoveryState = async () => {
   const { data: { session } } = await supabase.auth.getSession()
+  // The database refuses this anyway; say so instead of offering a form.
+  if (isDemoUser(session?.user?.email)) {
+    recoveryReady.value = false
+    isError.value = true
+    message.value = t('reset_demo_protected')
+    return
+  }
   recoveryReady.value = Boolean(session)
   if (!recoveryReady.value) {
     isError.value = true

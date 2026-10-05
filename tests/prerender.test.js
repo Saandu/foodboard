@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { descriptionFor, escapeHtml, jsonLdScript, render, sitemap } from '../scripts/prerender-lib.mjs'
+import { descriptionFor, escapeHtml, isSafeSlug, jsonLdScript, render, sitemap } from '../scripts/prerender-lib.mjs'
 
 /**
  * Link previews for a shared menu.
@@ -145,5 +145,26 @@ describe('jsonLdScript', () => {
     expect(out).not.toContain('</script>')
     expect(out).not.toContain('<script>')
     expect(JSON.parse(out).description).toBe('pasta </script><script>alert(1)</script>')
+  })
+})
+
+describe('isSafeSlug', () => {
+  it('accepts issued and demo slugs', () => {
+    expect(isSafeSlug('0f3a9c1d2b4e5f6a7b8c9d')).toBe(true)
+    expect(isSafeSlug('trattoria-mareluna')).toBe(true)
+  })
+
+  it('refuses anything that could leave dist/menu or break markup', () => {
+    for (const slug of ['../index', 'a/b', 'a\\b', 'a"><meta http-equiv=refresh>', '', 'UPPER', null, 'x'.repeat(65)]) {
+      expect(isSafeSlug(slug)).toBe(false)
+    }
+  })
+})
+
+describe('slug escaping', () => {
+  it('escapes the slug in the canonical link and the sitemap', () => {
+    const hostile = 'a"><meta http-equiv=refresh content=0>'
+    expect(render(TEMPLATE, menu({ slug: hostile }), ORIGIN)).not.toContain('<meta http-equiv=refresh')
+    expect(sitemap([hostile], ORIGIN)).not.toContain('<meta')
   })
 })

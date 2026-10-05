@@ -27,7 +27,8 @@ rebuild written from scratch and shares no code with it.
 
 These are published deliberately. The account owns nothing but the two showcase
 restaurants, `delete_account()` **refuses** it in Postgres rather than merely
-hiding the button, and [a workflow](.github/workflows/reset-demo.yml) reseeds
+hiding the button, its password, email and stored images cannot be changed or
+deleted, and [a workflow](.github/workflows/reset-demo.yml) reseeds
 the workspace five times a day - so edit anything you like. To keep your own
 menu instead, register normally; workspaces are isolated in Postgres, not in
 the client (see below).

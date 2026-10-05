@@ -199,6 +199,7 @@
   "reset_mismatch": "The passwords do not match.",
   "reset_done": "Password updated. Taking you to your workspace…",
   "reset_invalid": "This reset link is invalid or has expired. Request a new one below.",
+  "reset_demo_protected": "The shared demo account's password can't be changed. Sign up for your own workspace to manage a password.",
   "reset_error": "We could not update your password. Request another link and try again.",
   "reset_request_new": "Request a new reset link",
   "home_navigation": "Homepage navigation",
