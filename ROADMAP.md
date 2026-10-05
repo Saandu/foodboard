@@ -64,7 +64,6 @@ Roughly the order a paying customer would hit them.
 | **Email deliverability** | Supabase's built-in SMTP is rate-limited and lands in spam. A password reset that silently fails is the worst possible first impression. Needs a real provider. |
 | **Backups and restore** | Nothing is backed up beyond Supabase's own retention, and no restore has been tested. |
 | **Billing** | Stripe, with plan limits enforced in Postgres rather than in the client. |
-| **Menu import** | PDF/photo extraction, owner review and atomic draft saving are implemented. Backend deployment and real-menu Gemini evaluation remain before public rollout; see `docs/menu-import.md`. |
 | **Menu analytics** | Scans and views per restaurant - the most requested thing from venues, and an easy upsell. |
 | **Staff accounts** | One login per restaurant does not survive contact with an actual restaurant. Needs a membership table and policies keyed on it. |
 | **Uptime monitoring** | Otherwise outages arrive as customer complaints. |

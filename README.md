@@ -5,7 +5,9 @@
 
 A multi-tenant digital menu builder: a restaurant owner designs a menu in the
 dashboard - categories, dishes, prices, allergens, translations - and publishes
-it to diners as a link or a QR code on the table.
+it to diners as a link or a QR code on the table. An existing paper menu can be
+imported from a PDF or a photo: Gemini extracts it into a draft, the owner
+reviews dishes, prices and allergens, and it is saved unpublished.
 
 I first worked on a menu builder like this as an intern at Spark Solutions in
 Chișinău (2022-2023). That product belongs to Spark. This repository is a 2026
@@ -92,6 +94,57 @@ Two smaller choices follow from the same reasoning:
 The alternative - filtering in the client - costs nothing to write and
 everything to get wrong once. Enforcing it in the database costs a migration
 and the discipline of adding a policy per table.
+
+### AI menu import: the model proposes, the owner decides
+
+Typing in a 60-dish menu is the slowest part of onboarding, so owners can upload
+one PDF or photo instead. The browser sends it to a Supabase Edge Function,
+which calls Gemini with a JSON schema and returns an editable draft. Nothing is
+published until the owner has checked it.
+
+The design treats the model as an **untrusted input source**, the same as a form
+field, rather than as part of the system:
+
+- **The key never reaches the browser.** `GEMINI_API_KEY` is an Edge Function
+  secret. The function validates the bearer token itself, rejects anonymous and
+  unconfirmed accounts, and checks the caller owns the target restaurant before
+  reading the file.
+- **Files are checked by content, not by name.** Magic bytes decide PDF, JPEG,
+  PNG or WebP; bodies are read with a hard byte limit; PDFs over five pages are
+  refused before any money is spent.
+- **Quota is reserved before the provider is called**, inside a Postgres
+  function serialised with an advisory lock, so concurrent requests cannot race
+  past the limits (3 per account and 20 project-wide per day). A failed Google
+  call still counts. That is deliberate: it is what makes the cost bounded.
+- **Output is validated and repaired independently of the schema.** Gemini's
+  structured output is a request, not a guarantee. `repairDraft` normalises
+  `12,50` and `€ 1.250,00`, blanks ambiguous amounts like `12.500` instead of
+  guessing, drops empty headings and invalid allergen ids, and trims oversized
+  content. Each repair becomes a visible warning. An earlier version rejected
+  the whole extraction for one odd price, which wasted the user's quota.
+- **Allergens get their own step.** EU law (Regulation 1169/2011) makes the
+  restaurant liable for allergen information, and a misread legend is the most
+  harmful mistake the model can make. After reviewing dishes, the owner sees
+  every dish's allergens on one screen and confirms them separately. Changing
+  any allergen clears that confirmation.
+- **Saving is one transaction and safe to retry.** The draft is re-validated on
+  the server and written by `save_imported_menu` with deterministic ids and a
+  receipt keyed on the import id. A save whose response was lost can be retried
+  without creating a duplicate menu.
+
+**Prompt injection.** A menu is attacker-controllable text: a PDF can hide
+white-on-white "ignore your instructions". The prompt tells the model to treat
+the document as data, but the real defence is structural. The model has no
+tools, no secrets and no other tenant's data in its context. It can only return
+JSON that is validated, rendered as escaped text (the app has no `v-html`, and
+the CSP forbids inline script) and written into the uploader's own workspace as
+an unpublished draft they review. The worst a hostile file can do is produce a
+wrong draft for the person who uploaded it.
+
+The original file is never stored: it lives in browser and function memory
+only, and logs record token counts and error classes, never content. On the
+release fixtures a PDF took about five seconds and 799 input + 367 output
+tokens. Setup, limits and costs are in [docs/menu-import.md](docs/menu-import.md).
 
 ### Images are converted in the browser, before they are uploaded
 
@@ -215,6 +268,7 @@ the share dialog.
 | Frontend | Vue 3 (`<script setup>`), Vue Router, Pinia, Vite |
 | i18n | vue-i18n - dashboard in 3 locales, menus publishable in 9 languages |
 | Database | Postgres (Supabase), Row Level Security, `security definer` RPC |
+| AI | Google Gemini structured output, called from a Supabase Edge Function (Deno) |
 | Auth | Supabase Auth - email/password, confirmation, password reset |
 | Storage | Supabase Storage, owner-scoped object paths |
 | Tests | Vitest + Playwright + axe, with live RLS integration coverage |
@@ -222,8 +276,8 @@ the share dialog.
 | Hosting | Firebase Hosting, released manually after green CI |
 | Tooling | ESLint (flat config) + `@stylistic`, `sharp` for build-time images |
 
-Roughly 11,000 lines across 86 source, script, test and migration files.
-Seven application tables, 25 RLS policies, seven functions, two triggers and ten migrations.
+Roughly 12,000 lines across 98 source, script, test and migration files.
+Nine tables, 23 RLS policies, 16 functions, three triggers and 15 migrations.
 
 ### Layout
 
@@ -237,6 +291,7 @@ src/
   structureShape.js  defaults and repairs for the structure JSONB
   descriptorFields.js  the stored field names, in one place
 supabase/migrations/   schema, policies, functions - the security model
+supabase/functions/    menu-import Edge Function and its shared validation
 scripts/          demo seeding and one-off maintenance
 tests/            Vitest suites
 ```
@@ -245,10 +300,11 @@ tests/            Vitest suites
 
 ## Testing
 
-`npm test` - **138 passing**, plus 11 live database assertions when their
-disposable-account credentials are present. `npm run test:e2e` runs four
-desktop/mobile browser checks across the public menu, 404 recovery and demo login,
-including automated WCAG A/AA scans on every page in those journeys.
+`npm test` - **166 passing**, plus live database assertions when their
+disposable-account credentials are present. `npm run test:e2e` runs 13 browser
+journeys on desktop and mobile (26 runs): the public menu, 404 recovery, demo
+login, menu import and deletion, with automated WCAG A/AA scans on the pages
+they visit. The Edge Function has its own Deno suite.
 
 | Suite | Covers |
 | --- | --- |
@@ -267,7 +323,11 @@ including automated WCAG A/AA scans on every page in those journeys.
 | `tests/atomicSeed.test.js` | the showcase uses one owner-validated transaction |
 | `tests/dialogFocus.test.js` | focus entry, Tab containment, Escape and focus restoration |
 | `tests/rls.test.js` | **opt-in** - cross-account isolation and demo protection, against a real database |
+| `tests/menuImport.test.js` | file sniffing, bounded reads, draft validation and repair of model output |
+| `tests/menuImportDatabase.test.js` | the import, quota and deletion SQL, run in real Postgres (PGlite) |
+| `supabase/functions/menu-import/index_test.ts` | auth, ownership and quota are enforced before any paid call |
 | `e2e/portfolio-flow.spec.js` | published-menu, missing-route and one-click-demo browser journeys |
+| `e2e/menu-import.spec.js` | upload → review → allergen confirmation → save, retries, deletion, demo guard |
 
 Component tests use `@vue/test-utils` under happy-dom and opt in per file with
 `// @vitest-environment happy-dom`; everything else runs in node, which is
@@ -338,6 +398,11 @@ What is planned but not built is in [ROADMAP.md](ROADMAP.md).
   Playwright drives the public menu, missing-route recovery and one-click demo
   on desktop and mobile. The longer signup → build → publish → scan journey is
   still checked manually because confirmation email is outside the test runner.
+- **AI import accuracy is verified on synthetic fixtures, not on real menus at
+  scale.** Extraction is synchronous (the draft is kept in the browser if the
+  tab closes), limited to 3 attempts per account per day, and the shared demo
+  account shares those 3 across all visitors. Prices like "market price" have
+  to be filled in by hand.
 - **Single account per restaurant.** No staff logins, no roles. A real
   restaurant would need a membership table and policies keyed on it.
 
@@ -384,7 +449,8 @@ npm run dev
 ```
 
 Register an account through the app and confirm the email; the signup trigger
-creates the profile row. Other commands:
+creates the profile row. AI import also needs the Edge Function and a Gemini
+key; see [docs/menu-import.md](docs/menu-import.md). Other commands:
 
 ```bash
 npm run build     # production build, then prerenders one file per published menu
@@ -439,6 +505,3 @@ Reuse, modification and redistribution require prior written permission,
 except where applicable law or GitHub's Terms of Service permit otherwise.
 Third-party dependencies and materials retain their own licenses.
 See [LICENSE](LICENSE) for the full notice and permission requests.
-## AI menu import
-
-Owners can import a PDF or menu photo, review Gemini's extracted categories and dishes, and save a new unpublished menu. The key stays in a Supabase Edge Function. See [setup, API key location and workflow](docs/menu-import.md) before enabling the backend.
