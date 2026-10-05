@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 
 /**
  * "Delete account" is hidden for the shared demo account.
@@ -19,6 +19,7 @@ vi.mock('../src/demo.js', () => ({
 }))
 
 const store = {
+  clearSession: vi.fn(),
   isHeaderLoaded: true,
   user: { user_id: 'u1', email: '', name: 'Ada', surname: 'L' },
   selectedStructure: { structure_id: '111' }
@@ -26,6 +27,7 @@ const store = {
 vi.mock('../src/stores/store.js', () => ({ useStore: () => store }))
 
 const { default: TheMainHeader } = await import('../src/components/TheMainHeader.vue')
+const { supabase } = await import('../src/supabase.js')
 
 const mountHeader = (email) => {
   store.user = { ...store.user, email }
@@ -48,5 +50,11 @@ describe('the account menu', () => {
 
   it('still offers logout to the demo account — leaving is not destroying', () => {
     expect(mountHeader('demo@foodboard.app').find('.account-menu__logout').exists()).toBe(true)
+  })
+
+  it('signs out only this browser, not every session of the shared demo', async () => {
+    await mountHeader('demo@foodboard.app').find('.account-menu__logout').trigger('click')
+    await flushPromises()
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
   })
 })

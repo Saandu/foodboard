@@ -44,9 +44,10 @@ const openDeleteAccount = (event) => {
 }
 const backToStructures = () => router.push({ path: '/structures', query: { structure_id: store.selectedStructure?.structure_id } })
 // Clear the loaded workspace too, or the next account to sign in on this tab
-// inherits the previous one's structures.
+// inherits the previous one's structures. Local scope: the default revokes
+// every session of the account, and the shared demo has many at once.
 const handleLogout = async () => {
-  await supabase.auth.signOut()
+  await supabase.auth.signOut({ scope: 'local' })
   store.clearSession()
   await router.push('/login')
 }

@@ -113,6 +113,17 @@ describe('security audit fixes', () => {
     })
   })
 
+  describe('public menu name', () => {
+    it('returns the menu\'s per-language name descriptor', async () => {
+      await asAdmin()
+      await db.exec('update public.lists set data = \'{"editModal":[{"type":"tabs"}]}\' where list_id = \'la\'')
+      const slug = await slugOf('sa')
+      await asAnon()
+      const menu = (await db.query('select public.get_public_menu($1) as m', [slug])).rows[0].m
+      expect(menu.list.editModal).toEqual([{ type: 'tabs' }])
+    })
+  })
+
   describe('2. storage listing is owner-only', () => {
     it('hides other tenants\' objects from anon and from other accounts', async () => {
       await asAdmin()
