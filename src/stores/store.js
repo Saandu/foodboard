@@ -155,6 +155,10 @@ export const useStore = defineStore('store', {
     /** Drops the loaded workspace so the next account starts clean. */
     clearSession () {
       sessionBootstrap = null
+      // Unsaved import drafts belong to the account that made them, not the browser.
+      try {
+        Object.keys(localStorage).filter(key => key.startsWith('foodboard.menu-import.')).forEach(key => localStorage.removeItem(key))
+      } catch { /* Storage unavailable: nothing was kept. */ }
       this.$reset()
     },
 
