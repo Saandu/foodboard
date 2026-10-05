@@ -12,7 +12,7 @@ import stylistic from '@stylistic/eslint-plugin'
  * different times in different styles.
  */
 export default [
-  { ignores: ['dist/**', 'node_modules/**', '.firebase/**'] },
+  { ignores: ['dist/**', 'node_modules/**', '.firebase/**', '.agents/**', '.claude/**'] },
 
   js.configs.recommended,
   ...vue.configs['flat/recommended'],

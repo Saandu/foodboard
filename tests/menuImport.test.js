@@ -89,7 +89,7 @@ describe('FoodBoard storage conversion', () => {
       language: 'xx',
       currency: 'EUR',
       categories: [
-        { name: 'Mains', description: '', items: [item({ prices: [{ amount: '12,50', label: '' }] }), item({ prices: [{ amount: 'S.Q.', label: '' }] }), item({ allergens: [6, 15, 6] }), item({ prices: Array(7).fill({ amount: '9', label: 'x' }) }), item({ name: 'x'.repeat(200) })] },
+        { name: 'Mains', description: '', items: [item({ prices: [{ amount: '12,50', label: '' }] }), item({ prices: [{ amount: 'S.Q.', label: '' }] }), item({ allergens: ['gluten', 'Milk', 15, 'shellfish', 6] }), item({ prices: Array(7).fill({ amount: '9', label: 'x' }) }), item({ name: 'x'.repeat(200) })] },
         { name: 'Drinks', description: '', items: [] }
       ]
     })
@@ -100,7 +100,7 @@ describe('FoodBoard storage conversion', () => {
     expect(comma.prices[0].amount).toBe('12.50')
     expect(unreadable.prices[0].amount).toBe('')
     expect(unreadable.warning).toMatch(/could not be read/)
-    expect(allergens.allergens).toEqual([6])
+    expect(allergens.allergens).toEqual([6, 14])
     expect(sizes.prices).toHaveLength(6)
     expect(long.name).toHaveLength(120)
     expect(() => repairDraft({ title: 'Flyer', language: 'en', currency: '', categories: [] })).toThrow('not_a_menu')

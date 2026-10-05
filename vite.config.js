@@ -54,6 +54,7 @@ export default defineConfig({
     // Most of the suite is pure logic and runs faster without a DOM. The
     // component tests opt themselves in with `@vitest-environment happy-dom`.
     environment: 'node',
-    exclude: ['e2e/**', 'node_modules/**']
+    // .agents/ and .claude/ hold local, gitignored agent tooling with its own tests.
+    exclude: ['e2e/**', 'node_modules/**', '.agents/**', '.claude/**']
   }
 })

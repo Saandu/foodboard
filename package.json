@@ -21,7 +21,8 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "seed": "node scripts/seed.js",
-    "migrate:images": "node scripts/migrate-images.js"
+    "migrate:images": "node scripts/migrate-images.js",
+    "eval:import": "node scripts/eval-menu-import.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

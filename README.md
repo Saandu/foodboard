@@ -141,10 +141,22 @@ the CSP forbids inline script) and written into the uploader's own workspace as
 an unpublished draft they review. The worst a hostile file can do is produce a
 wrong draft for the person who uploaded it.
 
+**Accuracy is measured, not assumed.** `npm run eval:import` runs five
+fixtures through the deployed function and scores dishes, prices, allergens,
+currency, injection resistance and refusal of a non-menu
+([latest results](docs/menu-import-eval.md)). The fixtures target real failure
+modes: an Italian menu numbering allergens the EU way, a Romanian menu in lei
+with a weight-priced dish, a blurred and tilted photo, hidden injected text, and
+a lost-cat poster. The first runs found two real bugs. The model copied EU
+allergen numbers instead of translating them, and an ambiguous prompt produced
+prices 100× too high. Both were fixed in code: allergens are now returned as
+names and mapped to ids, and amounts have an explicit format. The latest run
+scores 5/5 with every dish, price and allergen correct, at 3-6 s and about 1,400
+input tokens per menu.
+
 The original file is never stored: it lives in browser and function memory
-only, and logs record token counts and error classes, never content. On the
-release fixtures a PDF took about five seconds and 799 input + 367 output
-tokens. Setup, limits and costs are in [docs/menu-import.md](docs/menu-import.md).
+only, and logs record token counts and error classes, never content. Setup,
+limits and costs are in [docs/menu-import.md](docs/menu-import.md).
 
 ### Images are converted in the browser, before they are uploaded
 
@@ -300,7 +312,7 @@ tests/            Vitest suites
 
 ## Testing
 
-`npm test` - **166 passing**, plus live database assertions when their
+`npm test` - **174 passing**, plus live database assertions when their
 disposable-account credentials are present. `npm run test:e2e` runs 13 browser
 journeys on desktop and mobile (26 runs): the public menu, 404 recovery, demo
 login, menu import and deletion, with automated WCAG A/AA scans on the pages
@@ -324,6 +336,7 @@ they visit. The Edge Function has its own Deno suite.
 | `tests/dialogFocus.test.js` | focus entry, Tab containment, Escape and focus restoration |
 | `tests/rls.test.js` | **opt-in** - cross-account isolation and demo protection, against a real database |
 | `tests/menuImport.test.js` | file sniffing, bounded reads, draft validation and repair of model output |
+| `tests/menuImportEval.test.js` | the accuracy-eval scorer: matching, allergen errors, injection checks |
 | `tests/menuImportDatabase.test.js` | the import, quota and deletion SQL, run in real Postgres (PGlite) |
 | `supabase/functions/menu-import/index_test.ts` | auth, ownership and quota are enforced before any paid call |
 | `e2e/portfolio-flow.spec.js` | published-menu, missing-route and one-click-demo browser journeys |
@@ -398,8 +411,8 @@ What is planned but not built is in [ROADMAP.md](ROADMAP.md).
   Playwright drives the public menu, missing-route recovery and one-click demo
   on desktop and mobile. The longer signup → build → publish → scan journey is
   still checked manually because confirmation email is outside the test runner.
-- **AI import accuracy is verified on synthetic fixtures, not on real menus at
-  scale.** Extraction is synchronous (the draft is kept in the browser if the
+- **AI import accuracy is measured on five synthetic fixtures, not on real menus
+  at scale.** Extraction is synchronous (the draft is kept in the browser if the
   tab closes), limited to 3 attempts per account per day, and the shared demo
   account shares those 3 across all visitors. Prices like "market price" have
   to be filled in by hand.
@@ -458,6 +471,7 @@ npm test          # unit and component suites
 npm run test:e2e  # desktop and mobile browser smoke suite
 npm run lint      # eslint
 npm run seed      # rebuild the demo restaurants (needs the service_role key)
+npm run eval:import  # AI import accuracy eval (real Gemini calls)
 npm run prerender # link-preview files only, against the existing dist/
 ```
 

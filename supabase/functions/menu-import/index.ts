@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.115.0'
 import { PDFDocument } from 'npm:pdf-lib@1.17.1'
-import { MAX_FILE_BYTES, detectMime, readBoundedBody, MENU_SCHEMA, EXTRACTION_PROMPT, parseGeminiResponse, validateDraft, currencyMatches } from '../_shared/menu-import.js'
+import { MAX_FILE_BYTES, detectMime, readBoundedBody, buildGeminiRequest, parseGeminiResponse, validateDraft, currencyMatches } from '../_shared/menu-import.js'
 import { buildMenuRecords } from '../_shared/menu-records.js'
 
 const env = (name: string) => Deno.env.get(name) || ''
@@ -73,13 +73,7 @@ Deno.serve(async request => {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: EXTRACTION_PROMPT }, { inlineData: { mimeType, data } }] }],
-        generationConfig: {
-          responseMimeType: 'application/json', responseJsonSchema: MENU_SCHEMA, maxOutputTokens: 20000,
-          ...(model.startsWith('gemini-3') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {})
-        }
-      }),
+      body: JSON.stringify(buildGeminiRequest(mimeType, data, model)),
       signal: AbortSignal.timeout(90000)
     })
     if (!response.ok) {

@@ -117,6 +117,8 @@ try {
     await browserPage.getByLabel('Menu name', { exact: true }).waitFor()
     await browserPage.screenshot({ path: 'test-results/menu-import-live-review.png', fullPage: true })
     await browserPage.getByRole('checkbox', { name: /checked the dish names/ }).check()
+    await browserPage.getByRole('button', { name: 'Next: confirm allergens', exact: true }).click()
+    await browserPage.getByRole('checkbox', { name: /allergens of every dish/ }).check()
     await browserPage.getByRole('button', { name: 'Save as draft', exact: true }).click()
     await browserPage.waitForURL(/\/lists\?structure_id=/)
     const lists = check(await owner.client.from('lists').select('*').eq('structure_id', structureId), 'Read browser saved menu')
