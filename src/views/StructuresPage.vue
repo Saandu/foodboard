@@ -103,7 +103,7 @@
           <section class="restaurant-delete">
             <h2>{{ $t('delete_restaurant') }}</h2>
             <p>{{ $t('delete_restaurant_help') }}</p>
-            <p v-if="deleteError" class="save-error" role="alert">{{ $t('delete_failed') }}</p>
+            <p v-if="deleteError" class="save-error" role="alert">{{ $t(deleteError) }}</p>
             <button type="button" class="btn btn-quiet restaurant-delete__button" :disabled="deleting || !!uploading" @click="deleteRestaurant">{{ $t(deleting ? 'deleting' : 'delete_restaurant') }}</button>
           </section>
         </section>
@@ -117,7 +117,7 @@
 import { computed, onBeforeMount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useStore } from '../stores/store.js'
+import { deleteErrorKey, useStore } from '../stores/store.js'
 import BaseInput from '../components/BaseInput.vue'
 import TabLanguages from '../components/TabLanguages.vue'
 import CheckboxLanguages from '../components/CheckboxLanguages.vue'
@@ -130,16 +130,16 @@ const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const deleting = ref(false)
-const deleteError = ref(false)
+const deleteError = ref('')
 async function deleteRestaurant () {
   const selected = store.selectedStructure
   if (!selected || deleting.value || !window.confirm(t('confirm_delete_restaurant', { name: selected.title }))) return
   deleting.value = true
-  deleteError.value = false
+  deleteError.value = ''
   try {
     await store.deleteStructure(selected.structure_id)
     await router.replace({ path: '/structures', query: store.selectedStructure ? { structure_id: store.selectedStructure.structure_id } : {} })
-  } catch { deleteError.value = true } finally { deleting.value = false }
+  } catch (failure) { deleteError.value = deleteErrorKey(failure) } finally { deleting.value = false }
 }
 const structure = computed(() => store.selectedStructure.structure)
 const selectedSection = ref('first')
@@ -214,9 +214,6 @@ onBeforeMount(async () => {
 @media (max-width: 1023px) { .settings-nav { display: flex; align-items: center; gap: var(--s-2); overflow-x: auto; }.settings-nav__title { flex: 0 0 auto; margin: 0; }.settings-nav nav { display: flex; flex: 0 0 auto; }.settings-nav__item { white-space: nowrap; } }
 @media (max-width: 600px) { .settings-page { padding-top: var(--s-4); }.settings-panel { padding: var(--s-4); }.page-title { margin-bottom: var(--s-5); }.form-actions .btn { flex: 1 1 auto; } }
 .workspace-empty { width: min(100%, 620px); margin: var(--s-8) auto; padding: var(--s-7); text-align: center; background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--r-md); }.workspace-empty span { color: var(--c-brand); font-size: .75rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }.workspace-empty h1 { margin-top: var(--s-3); font-size: 1.8rem; line-height: 1.15; text-wrap: balance; }.workspace-empty p { margin: var(--s-3) auto var(--s-5); max-width: 48ch; color: var(--c-ink-2); line-height: 1.55; }
-</style>
-
-<style scoped>
 .restaurant-delete { border-top: 1px solid var(--c-line); margin-top: var(--s-6); padding-top: var(--s-5); }
 .restaurant-delete h2 { font-size: 1.1rem; }
 .restaurant-delete p { max-width: 65ch; color: var(--c-ink-2); margin: var(--s-2) 0 var(--s-4); }

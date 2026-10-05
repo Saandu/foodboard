@@ -15,6 +15,10 @@ import {
 import { deleteProducts as deleteProductRows, fetchProducts, upsertProducts } from '../api/products.js'
 import { insertFeedback } from '../api/feedback.js'
 
+/** Translation key for a failed menu or restaurant deletion. */
+export const deleteErrorKey = (failure) =>
+  failure?.cause?.message === 'protected_account' ? 'delete_protected' : 'delete_failed'
+
 /** In-flight bootstrap, so concurrent navigations share one round trip.
  *  Module scope rather than store state: it is a promise, not data. */
 let sessionBootstrap = null
@@ -59,9 +63,10 @@ export const useStore = defineStore('store', {
     allCurrencies: [
       { name: '€', id: '€' },
       { name: '$', id: '$' },
-      { name: '£', id: '£' }
+      { name: '£', id: '£' },
+      { name: 'lei (RON)', id: 'lei' }
     ],
-    allCurrenciesOptions: ['€', '$', '£'],
+    allCurrenciesOptions: ['€', '$', '£', 'lei'],
     // The 14 EU-listed allergens. `key` resolves through vue-i18n at render time.
     allAllergens: [
       { key: 'a_molluscs', id: '1' },
@@ -300,14 +305,14 @@ export const useStore = defineStore('store', {
     },
 
     async deleteList (listId) {
-      await deleteListRow(listId)
+      await removeStructureImages(await deleteListRow(listId))
       this.categoriesByList = {}
       this.productsByCategory = {}
       if (this.list_id === listId) this.list_id = ''
     },
 
     async deleteStructure (structureId) {
-      await deleteStructureRow(structureId)
+      await removeStructureImages(await deleteStructureRow(structureId))
       this.structures = this.structures.filter(entry => entry.structure_id !== structureId)
       delete this.listsByStructure[structureId]
       this.categoriesByList = {}

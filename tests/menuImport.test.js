@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildMenuRecords } from '../supabase/functions/_shared/menu-records.js'
-import { currencyMatches, detectMime, parseGeminiResponse, readBoundedBody, validateDraft } from '../supabase/functions/_shared/menu-import.js'
+import { currencyMatches, detectMime, normalizeAmount, parseGeminiResponse, readBoundedBody, repairDraft, validateDraft } from '../supabase/functions/_shared/menu-import.js'
 import { fieldValue, tabFor } from '../src/menuTranslations.js'
 
 export const fixture = () => ({
@@ -80,5 +80,37 @@ describe('FoodBoard storage conversion', () => {
       { type: 'text', value: '35.50', suffix: 'Mică' }, { type: 'text', value: '49', suffix: 'Mare' }
     ])
     expect(records.products[0].product.addProductModal).not.toHaveLength(0)
+  })
+
+  it('repairs imperfect model output instead of discarding the extraction', () => {
+    const item = (extra = {}) => ({ name: 'Pasta', description: '', prices: [{ amount: '12.50', label: '' }], allergens: [], warning: '', ...extra })
+    const draft = repairDraft({
+      title: '',
+      language: 'xx',
+      currency: 'EUR',
+      categories: [
+        { name: 'Mains', description: '', items: [item({ prices: [{ amount: '12,50', label: '' }] }), item({ prices: [{ amount: 'S.Q.', label: '' }] }), item({ allergens: [6, 15, 6] }), item({ prices: Array(7).fill({ amount: '9', label: 'x' }) }), item({ name: 'x'.repeat(200) })] },
+        { name: 'Drinks', description: '', items: [] }
+      ]
+    })
+    expect(draft.title).toBe('Imported menu')
+    expect(draft.language).toBe('en')
+    expect(draft.categories).toHaveLength(1)
+    const [comma, unreadable, allergens, sizes, long] = draft.categories[0].items
+    expect(comma.prices[0].amount).toBe('12.50')
+    expect(unreadable.prices[0].amount).toBe('')
+    expect(unreadable.warning).toMatch(/could not be read/)
+    expect(allergens.allergens).toEqual([6])
+    expect(sizes.prices).toHaveLength(6)
+    expect(long.name).toHaveLength(120)
+    expect(() => repairDraft({ title: 'Flyer', language: 'en', currency: '', categories: [] })).toThrow('not_a_menu')
+  })
+  it('normalizes European, symbol and thousands-separated amounts', () => {
+    expect(['12,50', '€ 9', '1.250,00', '1,250.00', '12.500', '12.345.678', 'free'].map(normalizeAmount)).toEqual(['12.50', '9', '1250.00', '1250.00', '', '', ''])
+  })
+  it('matches Romanian lei to RON', () => {
+    expect(currencyMatches('RON', 'lei')).toBe(true)
+    expect(currencyMatches('lei', 'lei')).toBe(true)
+    expect(currencyMatches('RON', '€')).toBe(false)
   })
 })

@@ -59,15 +59,22 @@ Deno.serve(async request => {
     }
     const { error: quotaError } = await admin.rpc('reserve_menu_import', { p_user_id: user.id, p_structure_id: structureId, p_import_id: importId })
     if (quotaError) return reply(429, { error: 'import_limit_reached' })
-    let encoded = ''
-    for (let offset = 0; offset < bytes.length; offset += 32768) encoded += String.fromCharCode(...bytes.subarray(offset, offset + 32768))
+    // Native base64 where the runtime has it: the string loop costs ~0.5 s of
+    // CPU on an 8 MB file, a quarter of the Edge Function's CPU budget.
+    const toBase64 = (bytes as Uint8Array & { toBase64?: () => string }).toBase64
+    let data = toBase64 ? toBase64.call(bytes) : ''
+    if (!toBase64) {
+      let encoded = ''
+      for (let offset = 0; offset < bytes.length; offset += 32768) encoded += String.fromCharCode(...bytes.subarray(offset, offset + 32768))
+      data = btoa(encoded)
+    }
     const model = env('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
     if (!/^[a-zA-Z0-9.-]+$/.test(model)) throw new Error('import_not_configured')
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: EXTRACTION_PROMPT }, { inlineData: { mimeType, data: btoa(encoded) } }] }],
+        contents: [{ role: 'user', parts: [{ text: EXTRACTION_PROMPT }, { inlineData: { mimeType, data } }] }],
         generationConfig: {
           responseMimeType: 'application/json', responseJsonSchema: MENU_SCHEMA, maxOutputTokens: 20000,
           ...(model.startsWith('gemini-3') ? { thinkingConfig: { thinkingLevel: 'LOW' } } : {})
@@ -95,7 +102,7 @@ Deno.serve(async request => {
     return reply(200, { draft: parseGeminiResponse(result) })
   } catch (error) {
     const code = error instanceof Error ? error.message : ''
-    const safeCodes = ['invalid_draft', 'invalid_language', 'invalid_prices', 'currency_mismatch', 'invalid_allergens', 'empty_category', 'too_many_items', 'file_too_large', 'missing_file', 'unsupported_file', 'invalid_pdf', 'too_many_pages', 'invalid_extraction', 'extraction_incomplete', 'import_conflict', 'save_unavailable', 'import_not_configured']
+    const safeCodes = ['not_a_menu', 'invalid_draft', 'invalid_language', 'invalid_prices', 'currency_mismatch', 'invalid_allergens', 'empty_category', 'too_many_items', 'file_too_large', 'missing_file', 'unsupported_file', 'invalid_pdf', 'too_many_pages', 'invalid_extraction', 'extraction_incomplete', 'import_conflict', 'save_unavailable', 'import_not_configured']
     if (safeCodes.includes(code)) return reply(code === 'save_unavailable' ? 503 : 400, { error: code })
     return reply(502, { error: 'provider_unavailable' })
   }

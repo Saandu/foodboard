@@ -47,9 +47,9 @@ The frontend can be deployed through the project's existing Firebase workflow af
 2. Open its menu list and choose **Import from PDF or photo**.
 3. Choose one PDF, JPG, PNG or WebP and consent to sending it to Google.
 4. The backend checks the token, ownership, file signature, size and PDF page count. It reserves quota before calling Gemini once.
-5. Gemini receives the original file with an extraction prompt and JSON schema. The backend validates the result independently, rejecting incomplete output and menus beyond the supported bounds.
+5. Gemini receives the file (photos over 1.5 MB are first downscaled to 2400 px WebP in the browser) with an extraction prompt and JSON schema. The backend repairs imperfect output instead of discarding it: European or symbol-prefixed prices are normalised, unreadable or ambiguous prices (`12.500`) are left blank with a warning, empty headings and invalid allergen IDs are dropped, and over-limit content is trimmed with a warning. A file with no dishes returns `not_a_menu`. The draft is kept in the browser for 24 hours, so closing the tab does not waste the extraction.
 6. Compare the draft with the original. Edit names, descriptions, categories, price variants and explicitly declared allergens; remove unwanted dishes or categories. Unknown prices must be filled in before saving.
-7. Confirm that you reviewed it and choose **Save as draft**. Currency mismatch blocks saving; changing the detected currency does not convert prices. Ensure the restaurant's currency is correct.
+7. Confirm that you reviewed dishes, prices and currency, then continue to **Confirm allergens**: every dish's allergens are shown together and need their own confirmation, which resets if any allergen changes. Then choose **Save as draft**. Currency mismatch blocks saving; changing the detected currency does not convert prices. Ensure the restaurant's currency is correct.
 8. A transaction creates the list, category group and product groups together, then returns you to the menu list. The menu remains unpublished until you publish it through the existing editor.
 
 The original language is preserved. No automatic translation is performed. Other language views fall back to the source text; translate later in the normal editor. Unsupported source languages need manual review under a supported language tab.

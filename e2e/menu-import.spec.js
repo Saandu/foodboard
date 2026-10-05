@@ -7,7 +7,7 @@ import { buildMenuRecords } from '../supabase/functions/_shared/menu-records.js'
 const owner = '11111111-1111-4111-8111-111111111111'
 const menu = () => ({ title: 'Lunch menu', language: 'en', currency: 'EUR', warnings: [], categories: [{ name: 'Main courses', description: '', items: [{ name: 'Garden pasta', description: 'Tomatoes and basil', prices: [{ amount: '12.50', label: 'Small' }, { amount: '18.00', label: 'Large' }], allergens: [6], warning: '' }] }] })
 
-async function workspace (page, { demo = false, path = '/import-menu?structure_id=test-restaurant', menus = [] } = {}) {
+async function workspace (page, { demo = false, path = '/import-menu?structure_id=test-restaurant', menus = [], protectedDelete = false } = {}) {
   const url = process.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
   const ref = new URL(url).hostname.split('.')[0]
   const session = {
@@ -27,11 +27,16 @@ async function workspace (page, { demo = false, path = '/import-menu?structure_i
     else if (path.endsWith('/users')) result = { user_id: owner, name: 'Test owner', settings: {}, notifications: [] }
     else if (path.endsWith('/structures')) result = restaurants
     else if (path.endsWith('/lists')) result = lists
-    else if (path.endsWith('/delete_menu_workspace')) {
+    else if (protectedDelete && path.includes('_workspace')) {
+      calls.push({ action: 'refused', path })
+      return route.fulfill({ status: 400, json: { code: 'P0001', message: 'protected_account', details: null, hint: null } })
+    } else if (path.includes('/storage/v1/object/') && request.method() === 'DELETE') {
+      calls.push({ action: 'remove-media', paths: JSON.parse(request.postData()).prefixes })
+    } else if (path.endsWith('/delete_menu_workspace')) {
       const id = JSON.parse(request.postData()).p_list_id
       lists.splice(lists.findIndex(row => row.list_id === id), 1)
       calls.push({ action: 'delete-menu', id })
-      result = null
+      result = [`${owner}/test-restaurant/dish-1.webp`]
     } else if (path.endsWith('/delete_restaurant_workspace')) {
       const id = JSON.parse(request.postData()).p_structure_id
       restaurants = restaurants.filter(row => row.structure_id !== id)
@@ -67,7 +72,16 @@ test('menu deletion is visible, cancellation preserves it and confirmation remov
   page.once('dialog', dialog => dialog.accept())
   await remove.click()
   await expect(page.getByRole('button', { name: 'Create your first menu', exact: true })).toBeVisible()
-  expect(calls).toEqual([{ action: 'delete-menu', id: 'saved-menu' }])
+  await expect.poll(() => calls).toEqual([{ action: 'delete-menu', id: 'saved-menu' }, { action: 'remove-media', paths: [`${owner}/test-restaurant/dish-1.webp`] }])
+})
+
+test('the shared demo explains that its menus and restaurant cannot be deleted', async ({ page }) => {
+  const records = buildMenuRecords(menu(), 'test-restaurant', owner, () => 'saved-menu')
+  await workspace(page, { demo: true, protectedDelete: true, path: '/lists?structure_id=test-restaurant', menus: [records.list] })
+  page.once('dialog', dialog => dialog.accept())
+  await page.getByRole('button', { name: 'Delete menu Lunch menu', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('demo restaurant')
+  await expect(page.getByRole('button', { name: 'Delete menu Lunch menu', exact: true })).toBeVisible()
 })
 
 test('restaurant deletion confirms its scope and returns to an empty dashboard', async ({ page }) => {
@@ -105,11 +119,17 @@ test('shared demo uploads, extracts and saves a draft', async ({ page }) => {
   await page.getByRole('checkbox', { name: /permission to send/ }).check()
   await page.getByRole('button', { name: 'Extract menu', exact: true }).click()
   await page.getByRole('checkbox', { name: /checked the dish names/ }).check()
+  await confirmAllergens(page)
   await page.getByRole('button', { name: 'Save as draft', exact: true }).click()
   await expect(page).toHaveURL(/\/lists\?structure_id=test-restaurant/)
   await expect(page.getByText('Lunch menu', { exact: true })).toBeVisible()
   expect(calls.map(call => call.action)).toEqual(['extract', 'save'])
 })
+
+async function confirmAllergens (page) {
+  await page.getByRole('button', { name: 'Next: confirm allergens', exact: true }).click()
+  await page.getByRole('checkbox', { name: /allergens of every dish/ }).check()
+}
 
 async function accessible (page) {
   const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()
@@ -128,10 +148,11 @@ test('owner extracts, reviews and saves an unpublished menu', async ({ page }, t
   await expect(page.getByLabel('Menu name', { exact: true })).toHaveValue('Lunch menu')
   await expect(page.getByLabel('Price', { exact: true })).toHaveCount(2)
   await page.getByLabel('Menu name', { exact: true }).fill('Reviewed lunch menu')
-  await expect(page.getByRole('button', { name: 'Save as draft', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Next: confirm allergens', exact: true })).toBeDisabled()
   await accessible(page)
   await page.screenshot({ path: testInfo.outputPath('menu-review.png'), fullPage: true })
   await page.getByRole('checkbox', { name: /checked the dish names/ }).check()
+  await confirmAllergens(page)
   await page.getByRole('button', { name: 'Save as draft', exact: true }).click()
   await expect(page).toHaveURL(/\/lists\?structure_id=test-restaurant/)
   await expect(page.getByText('Reviewed lunch menu', { exact: true })).toBeVisible()
@@ -144,12 +165,41 @@ test('currency mismatch prevents saving, and edits require review again', async 
   await workspace(page)
   await page.getByRole('button', { name: 'Try a sample' }).click()
   await page.getByRole('checkbox', { name: /checked the dish names/ }).check()
-  await expect(page.getByRole('button', { name: 'Save as draft', exact: true })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Next: confirm allergens', exact: true })).toBeEnabled()
   await page.getByLabel('Detected currency').fill('USD')
   await expect(page.getByRole('checkbox', { name: /checked the dish names/ })).not.toBeChecked()
   await expect(page.getByText(/currencies do not match/)).toBeVisible()
   await page.getByRole('checkbox', { name: /checked the dish names/ }).check()
-  await expect(page.getByRole('button', { name: 'Save as draft', exact: true })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Next: confirm allergens', exact: true })).toBeDisabled()
+})
+
+test('allergens need their own confirmation, and changing one asks again', async ({ page }) => {
+  await workspace(page)
+  await page.getByRole('button', { name: 'Try a sample' }).click()
+  await expect(page.getByRole('button', { name: 'Save as draft', exact: true })).toHaveCount(0)
+  await page.getByRole('checkbox', { name: /checked the dish names/ }).check()
+  await page.getByRole('button', { name: 'Next: confirm allergens', exact: true }).click()
+  await expect(page.getByText('1 of 2 dishes have declared allergens.')).toBeVisible()
+  await accessible(page)
+  const save = page.getByRole('button', { name: 'Save as draft', exact: true })
+  const confirm = page.getByRole('checkbox', { name: /allergens of every dish/ })
+  await expect(save).toBeDisabled()
+  await confirm.check()
+  await expect(save).toBeEnabled()
+  await page.getByRole('group', { name: 'Grilled vegetables' }).getByRole('checkbox', { name: 'Milk' }).check()
+  await expect(confirm).not.toBeChecked()
+  await expect(save).toBeDisabled()
+  await page.getByRole('button', { name: 'Back to dishes', exact: true }).click()
+  await expect(page.getByRole('checkbox', { name: /checked the dish names/ })).toBeChecked()
+})
+
+test('a draft survives the tab being closed before saving', async ({ page }) => {
+  await workspace(page)
+  await page.getByRole('button', { name: 'Try a sample' }).click()
+  await page.getByLabel('Menu name', { exact: true }).fill('Kept after reload')
+  await page.reload()
+  await expect(page.getByLabel('Menu name', { exact: true })).toHaveValue('Kept after reload')
+  await expect(page.getByText(/Draft restored/)).toBeVisible()
 })
 
 test('an unconfirmed save freezes editing and retries the same payload', async ({ page }) => {
@@ -164,8 +214,9 @@ test('an unconfirmed save freezes editing and retries the same payload', async (
   })
   await page.getByRole('button', { name: 'Try a sample' }).click()
   await page.getByRole('checkbox', { name: /checked the dish names/ }).check()
+  await confirmAllergens(page)
   await page.getByRole('button', { name: 'Save as draft', exact: true }).click()
-  await expect(page.getByLabel('Menu name', { exact: true })).toBeDisabled()
+  await expect(page.getByRole('checkbox', { name: /allergens of every dish/ })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Retry saving this draft' })).toBeEnabled()
   await page.getByRole('button', { name: 'Retry saving this draft' }).click()
   await expect(page).toHaveURL(/\/lists\?structure_id=test-restaurant/)
