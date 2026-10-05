@@ -247,10 +247,8 @@
     "portion": "Porzione / dimensione",
     "remove_price": "Rimuovi prezzo",
     "add_price": "Aggiungi variante di prezzo",
-    "allergens": "Allergeni dichiarati",
-    "allergen_help": "Seleziona solo gli allergeni confermati dal ristorante. Una casella vuota non significa che il piatto sia privo di allergeni.",
     "empty": "Mantieni almeno un piatto per salvare.",
-    "confirm_review": "Ho controllato nomi, prezzi, valuta e allergeni confrontandoli con l’originale.",
+    "confirm_review": "Ho controllato nomi dei piatti, prezzi e valuta rispetto all’originale.",
     "unpublished": "Il menu sarà salvato come non pubblicato. Puoi modificarlo e pubblicarlo dalla dashboard.",
     "saving": "Salvataggio…",
     "discard": "Uscire dall’importazione? Le modifiche non salvate andranno perse. Se un salvataggio è in corso, controlla la dashboard prima di importare di nuovo.",
@@ -283,8 +281,17 @@
       "too_many_items": "Puoi importare un massimo di 150 piatti.",
       "import_conflict": "Importazione già salvata con contenuti diversi. Controlla la dashboard prima di importare di nuovo.",
       "save_unavailable": "Salvataggio non confermato. Riprova la stessa bozza per evitare duplicati.",
-      "currency_mismatch": "Le valute non coincidono. Controlla la valuta del ristorante e i prezzi originali. Non viene effettuata alcuna conversione."
-    }
+      "currency_mismatch": "Le valute non coincidono. Controlla la valuta del ristorante e i prezzi originali. Non viene effettuata alcuna conversione.",
+      "not_a_menu": "Nessun piatto trovato. Verifica che il file sia un menu o prova una foto più nitida."
+    },
+    "allergen_step": "Conferma allergeni",
+    "next_allergens": "Avanti: conferma allergeni",
+    "allergen_step_help": "Confronta ogni piatto con le dichiarazioni di allergeni del menu originale. L’IA può leggere male una legenda e una casella vuota non significa che il piatto sia privo di allergeni.",
+    "allergen_summary": "{declared} piatti su {total} hanno allergeni dichiarati.",
+    "no_allergens_declared": "Nessun allergene dichiarato.",
+    "confirm_allergens": "Ho controllato gli allergeni di ogni piatto rispetto al menu originale.",
+    "back_to_dishes": "Torna ai piatti",
+    "restored_source": "Bozza ripristinata dall’ultima visita. Il file originale non viene conservato: aprilo a parte per confrontare."
   },
   "restaurants": "Ristoranti",
   "add_restaurant": "Aggiungi ristorante",
@@ -294,5 +301,6 @@
   "delete_restaurant_help": "Elimina questo ristorante e tutti i suoi menu, categorie e piatti. Il link pubblico smetterà di funzionare. L’operazione è irreversibile.",
   "confirm_delete_menu": "Eliminare il menu «{name}» e tutte le sue categorie e piatti? L’operazione è irreversibile.",
   "confirm_delete_restaurant": "Eliminare il ristorante «{name}» e tutti i suoi menu, categorie e piatti? Il link pubblico smetterà di funzionare. L’operazione è irreversibile.",
-  "delete_failed": "Eliminazione non riuscita. I dati potrebbero essere ancora presenti; aggiorna la pagina e riprova."
+  "delete_failed": "Eliminazione non riuscita. I dati potrebbero essere ancora presenti; aggiorna la pagina e riprova.",
+  "delete_protected": "Il ristorante demo condiviso e i suoi menu non possono essere eliminati. Registrati per avere il tuo spazio e provare l’eliminazione."
 }

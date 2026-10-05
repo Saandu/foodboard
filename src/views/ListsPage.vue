@@ -66,7 +66,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { useStore } from '../stores/store.js'
+import { deleteErrorKey, useStore } from '../stores/store.js'
 import { useRoute, useRouter } from 'vue-router'
 import ListShortData from '../components/ListShortData.vue'
 import SendFeedbackModal from '../components/SendFeedbackModal.vue'
@@ -150,8 +150,13 @@ const deleteList = async (index) => {
   store.saveError = ''
   try {
     await store.deleteList(list.list_id)
-    await store.requestLists(store.selectedStructure.structure_id, true)
-  } catch { store.saveError = 'delete_failed' } finally { deletingList.value = '' }
+  } catch (failure) {
+    store.saveError = deleteErrorKey(failure)
+    deletingList.value = ''
+    return
+  }
+  // The delete has committed; a failed refresh must not report it as failed.
+  try { await store.requestLists(store.selectedStructure.structure_id, true) } catch { store.lists.lists.splice(index, 1) } finally { deletingList.value = '' }
 }
 const closeModal = async (data, index, action) => {
   if (data !== null) {

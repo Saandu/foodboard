@@ -247,10 +247,8 @@
     "portion": "Portion / size",
     "remove_price": "Remove price",
     "add_price": "Add price variant",
-    "allergens": "Declared allergens",
-    "allergen_help": "Check only allergens explicitly confirmed by the restaurant. Missing checkboxes do not mean an allergen-free dish.",
     "empty": "Keep at least one dish to save this menu.",
-    "confirm_review": "I checked the dish names, prices, currency and allergens against the original.",
+    "confirm_review": "I checked the dish names, prices and currency against the original.",
     "unpublished": "The menu will be saved as unpublished. You can edit it further and publish it from your dashboard.",
     "saving": "Saving…",
     "discard": "Leave this import? Unsaved edits will be lost. If a save is still pending, check your dashboard before importing again.",
@@ -283,8 +281,17 @@
       "too_many_items": "A menu can contain up to 150 imported dishes.",
       "import_conflict": "This import was already saved with different content. Check your dashboard before importing again.",
       "save_unavailable": "The save could not be confirmed. Retry the same draft to avoid duplicates.",
-      "currency_mismatch": "The currencies do not match. Check the restaurant’s currency setting and the source prices before saving. No currency conversion is performed."
-    }
+      "currency_mismatch": "The currencies do not match. Check the restaurant’s currency setting and the source prices before saving. No currency conversion is performed.",
+      "not_a_menu": "No dishes were found. Make sure the file is a menu, or try a sharper photo."
+    },
+    "allergen_step": "Confirm allergens",
+    "next_allergens": "Next: confirm allergens",
+    "allergen_step_help": "Compare each dish with the allergen declarations on the original menu. AI can misread a legend, and an unticked box does not mean a dish is allergen-free.",
+    "allergen_summary": "{declared} of {total} dishes have declared allergens.",
+    "no_allergens_declared": "No allergens declared.",
+    "confirm_allergens": "I checked the allergens of every dish against the original menu.",
+    "back_to_dishes": "Back to dishes",
+    "restored_source": "Draft restored from your last visit. The original file is not kept, so open it separately to compare."
   },
   "restaurants": "Restaurants",
   "add_restaurant": "Add restaurant",
@@ -294,5 +301,6 @@
   "delete_restaurant_help": "Delete this restaurant and all its menus, categories and dishes. Its public menu link will stop working. This cannot be undone.",
   "confirm_delete_menu": "Delete menu “{name}” and all its categories and dishes? This cannot be undone.",
   "confirm_delete_restaurant": "Delete restaurant “{name}” and all its menus, categories and dishes? Its public link will stop working. This cannot be undone.",
-  "delete_failed": "Deletion failed. Your data may still be present; refresh and try again."
+  "delete_failed": "Deletion failed. Your data may still be present; refresh and try again.",
+  "delete_protected": "The shared demo restaurant and its menus can't be deleted. Sign up for your own workspace to try deletion."
 }

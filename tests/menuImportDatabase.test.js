@@ -23,7 +23,7 @@ describe('menu import migrations in PostgreSQL', () => {
       grant usage on schema auth to authenticated;
       grant execute on function auth.uid() to authenticated;
     `)
-    for (const file of ['20260814000000_create_core_tables.sql', '20260816010000_enable_private_workspaces.sql', '20260906000000_protect_shared_accounts.sql', '20261004191254_menu_import.sql', '20261004210326_allow_demo_menu_import.sql', '20261004212307_workspace_deletion.sql']) {
+    for (const file of ['20260814000000_create_core_tables.sql', '20260816010000_enable_private_workspaces.sql', '20260906000000_protect_shared_accounts.sql', '20261004191254_menu_import.sql', '20261004210326_allow_demo_menu_import.sql', '20261004212307_workspace_deletion.sql', '20261005090000_guard_workspace_deletion.sql']) {
       await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
     }
     // Supabase's platform supplies the service role's core-table privileges.
@@ -79,6 +79,35 @@ describe('menu import migrations in PostgreSQL', () => {
     expect((await db.query('select count(*)::int as count from public.products')).rows[0].count).toBe(0)
     await db.exec(`select set_config('request.jwt.claim.sub', '${b}', false);`)
     expect((await db.query('select structure_id from public.structures')).rows).toEqual([{ structure_id: 'b-restaurant' }])
+    await db.exec(`reset role; insert into public.structures(structure_id,user_id) values ('a-restaurant','${a}');`)
+  })
+  it('protected accounts cannot delete menus or restaurants, even with direct deletes', async () => {
+    await save()
+    await db.exec(`reset role; insert into public.protected_accounts(user_id, reason) values ('${a}', 'demo'); set role authenticated; select set_config('request.jwt.claim.sub', '${a}', false);`)
+    await expect(db.query('select public.delete_menu_workspace($1)', [`${importId}-0`])).rejects.toThrow('protected_account')
+    await expect(db.query("select public.delete_restaurant_workspace('a-restaurant')")).rejects.toThrow('protected_account')
+    await db.exec("delete from public.lists; delete from public.structures where structure_id = 'a-restaurant'")
+    expect((await db.query('select count(*)::int as count from public.lists')).rows[0].count).toBe(1)
+    expect((await db.query('select count(*)::int as count from public.structures')).rows[0].count).toBe(1)
+    await db.exec('reset role;')
+  })
+  it('returns only the image paths no remaining row still references', async () => {
+    const photo = (path) => ({ editModal: [{ type: 'file', value: path, active: true }] })
+    const shared = `${a}/a-restaurant/dish-shared.webp`
+    const own = `${a}/a-restaurant/dish-own.webp`
+    const logo = `${a}/a-restaurant/logo-1.webp`
+    await db.exec(`reset role;
+      update public.structures set structure = '${JSON.stringify({ logo })}' where structure_id = 'a-restaurant';
+      insert into public.lists(list_id, structure_id, user_id, title, is_active, has_sublists, data) values
+        ('m1', 'a-restaurant', '${a}', 'One', false, false, '{}'), ('m2', 'a-restaurant', '${a}', 'Two', false, false, '{}');
+      insert into public.categories(category_id, list_id, user_id, category) values
+        ('m1', 'm1', '${a}', '{"categories":[{"category_id":"c1"}]}'), ('m2', 'm2', '${a}', '{"categories":[{"category_id":"c2"}]}');
+      insert into public.products(product_id, category_id, user_id, product) values
+        ('c1', 'c1', '${a}', '${JSON.stringify({ items: [photo(shared), photo(own), photo('data:image/png;base64,AA')] })}'),
+        ('c2', 'c2', '${a}', '${JSON.stringify({ items: [photo(shared)] })}');
+      set role authenticated; select set_config('request.jwt.claim.sub', '${a}', false);`)
+    expect((await db.query("select public.delete_menu_workspace('m1') as paths")).rows[0].paths).toEqual([own])
+    expect((await db.query("select public.delete_restaurant_workspace('a-restaurant') as paths")).rows[0].paths.sort()).toEqual([logo, shared].sort())
     await db.exec(`reset role; insert into public.structures(structure_id,user_id) values ('a-restaurant','${a}');`)
   })
   it('rejects another owner and changed retry content while allowing protected-demo imports', async () => {

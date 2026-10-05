@@ -48,6 +48,7 @@ export function upsertList ({ listId, structureId, userId, title, isActive, data
   )
 }
 
-export function deleteList (listId) {
-  return ok(supabase.rpc('delete_menu_workspace', { p_list_id: listId }), 'Could not delete the menu')
+/** Deletes a menu with its categories and dishes; resolves to the Storage paths nothing uses any more. */
+export async function deleteList (listId) {
+  return (await rows(supabase.rpc('delete_menu_workspace', { p_list_id: listId }), 'Could not delete the menu')) || []
 }

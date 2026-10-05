@@ -9,8 +9,9 @@
     <template v-else>
       <ol class="import-steps" :aria-label="$t('menu_import.steps')">
         <li :aria-current="!draft ? 'step' : undefined">1. {{ $t('menu_import.upload') }}</li>
-        <li :aria-current="draft ? 'step' : undefined">2. {{ $t('menu_import.review') }}</li>
-        <li>3. {{ $t('menu_import.save_draft') }}</li>
+        <li :aria-current="draft && stage === 'review' ? 'step' : undefined">2. {{ $t('menu_import.review') }}</li>
+        <li :aria-current="draft && stage === 'allergens' ? 'step' : undefined">3. {{ $t('menu_import.allergen_step') }}</li>
+        <li>4. {{ $t('menu_import.save_draft') }}</li>
       </ol>
       <section v-if="demo" class="import-notice demo-import">
         <p>{{ $t('menu_import.demo_notice') }}</p>
@@ -37,6 +38,7 @@
           <h2>{{ $t('menu_import.source') }}</h2>
           <img v-if="previewUrl && file?.type.startsWith('image/')" :src="previewUrl" :alt="$t('menu_import.source')">
           <a v-else-if="previewUrl" :href="previewUrl" target="_blank" rel="noopener">{{ $t('menu_import.view_pdf') }}</a>
+          <p v-else-if="restored">{{ $t('menu_import.restored_source') }}</p>
           <p v-else>{{ $t('menu_import.sample_source') }}</p>
           <p>{{ file?.name }}</p>
           <p>{{ $t('menu_import.review_help') }}</p>
@@ -44,7 +46,7 @@
           <button type="button" class="btn btn-quiet" :disabled="busy || saveAttempted" @click="restart">{{ $t('menu_import.restart') }}</button>
         </aside>
         <form class="review-form" @submit.prevent="save">
-          <fieldset :disabled="busy || saveAttempted">
+          <fieldset v-if="stage === 'review'" :disabled="busy || saveAttempted">
             <legend>{{ $t('menu_import.review') }} · {{ itemCount }} {{ $t('menu_import.dishes') }}</legend>
             <div class="draft-fields">
               <label>{{ $t('menu_import.menu_name') }}<input v-model="draft.title" maxlength="120" required></label>
@@ -70,16 +72,31 @@
                   <button v-if="item.prices.length > 1" type="button" class="btn btn-quiet" :aria-label="$t('menu_import.remove_price')" @click="item.prices.splice(priceIndex, 1)">×</button>
                 </div>
                 <button v-if="item.prices.length < 6" type="button" class="btn btn-quiet" @click="item.prices.push({ amount: '', label: '' })">{{ $t('menu_import.add_price') }}</button>
-                <details><summary>{{ $t('menu_import.allergens') }} ({{ item.allergens.length }})</summary><p>{{ $t('menu_import.allergen_help') }}</p><div class="allergen-options"><label v-for="allergen in store.allAllergens" :key="allergen.id"><input v-model="item.allergens" type="checkbox" :value="Number(allergen.id)"> {{ $t(allergen.key) }}</label></div></details>
                 <p v-if="item.warning" class="import-notice">{{ item.warning }}</p>
               </article>
             </section>
             <p v-if="!itemCount" role="alert">{{ $t('menu_import.empty') }}</p>
             <label class="check-line"><input v-model="reviewed" type="checkbox"> {{ $t('menu_import.confirm_review') }}</label>
+            <button type="button" class="btn btn-primary" :disabled="!canContinue" @click="stage = 'allergens'">{{ $t('menu_import.next_allergens') }}</button>
+          </fieldset>
+          <fieldset v-else :disabled="busy || saveAttempted">
+            <legend>{{ $t('menu_import.allergen_step') }}</legend>
+            <p>{{ $t('menu_import.allergen_step_help') }}</p>
+            <p class="import-notice">{{ $t('menu_import.allergen_summary', { declared: declaredCount, total: itemCount }) }}</p>
+            <section v-for="(category, categoryIndex) in draft.categories" :key="categoryIndex" class="review-category">
+              <h3>{{ category.name }}</h3>
+              <fieldset v-for="(item, itemIndex) in category.items" :key="itemIndex" class="allergen-dish">
+                <legend>{{ item.name }}</legend>
+                <div class="allergen-options"><label v-for="allergen in store.allAllergens" :key="allergen.id"><input v-model="item.allergens" type="checkbox" :value="Number(allergen.id)"> {{ $t(allergen.key) }}</label></div>
+                <p v-if="!item.allergens.length" class="import-muted">{{ $t('menu_import.no_allergens_declared') }}</p>
+              </fieldset>
+            </section>
+            <label class="check-line"><input v-model="allergensConfirmed" type="checkbox"> {{ $t('menu_import.confirm_allergens') }}</label>
             <p>{{ $t('menu_import.unpublished') }}</p>
+            <button type="button" class="btn btn-quiet" @click="stage = 'review'">{{ $t('menu_import.back_to_dishes') }}</button>
           </fieldset>
           <p v-if="saveAttempted && !busy" class="import-notice" role="status">{{ $t('menu_import.save_pending') }}</p>
-          <button class="btn btn-primary" type="submit" :disabled="!canSave">{{ busy ? $t('menu_import.saving') : $t(saveAttempted ? 'menu_import.retry_save' : 'menu_import.save_draft') }}</button>
+          <button v-if="stage === 'allergens'" class="btn btn-primary" type="submit" :disabled="!canSave">{{ busy ? $t('menu_import.saving') : $t(saveAttempted ? 'menu_import.retry_save' : 'menu_import.save_draft') }}</button>
         </form>
       </div>
     </template>
@@ -93,6 +110,7 @@ import { useI18n } from 'vue-i18n'
 import { useStore } from '../stores/store.js'
 import { importRequest } from '../api/menuImport.js'
 import { isDemoUser } from '../demo.js'
+import { compressImage } from '../media.js'
 import { currencyMatches, MAX_FILE_BYTES, MIME_TYPES, validateDraft } from '../../supabase/functions/_shared/menu-import.js'
 
 const store = useStore()
@@ -110,12 +128,51 @@ const reviewed = ref(false)
 const busy = ref(false)
 const error = ref('')
 let importId = crypto.randomUUID()
+const IMAGE_COMPRESS_BYTES = 1.5 * 1024 * 1024
 let saved = false
 const saveAttempted = ref(false)
-const itemCount = computed(() => draft.value?.categories.reduce((count, category) => count + category.items.length, 0) || 0)
+const stage = ref('review')
+const allergensConfirmed = ref(false)
+const restored = ref(false)
+const items = computed(() => draft.value?.categories.flatMap(category => category.items) || [])
+const itemCount = computed(() => items.value.length)
+const declaredCount = computed(() => items.value.filter(item => item.allergens.length).length)
 const currencyOkay = computed(() => currencyMatches(draft.value?.currency || '', structure.value?.structure.currency || ''))
-const canSave = computed(() => reviewed.value && currencyOkay.value && itemCount.value && !busy.value)
-watch(draft, () => { reviewed.value = false }, { deep: true })
+const canContinue = computed(() => reviewed.value && currencyOkay.value && itemCount.value && !busy.value)
+const canSave = computed(() => canContinue.value && allergensConfirmed.value && stage.value === 'allergens')
+// Each confirmation covers only its own step: editing a price must not keep
+// a stale dish review, and ticking an allergen must not undo it either.
+const contentKey = computed(() => draft.value && JSON.stringify(draft.value, (key, value) => key === 'allergens' ? undefined : value))
+const allergenKey = computed(() => JSON.stringify(items.value.map(item => item.allergens)))
+watch(contentKey, () => { reviewed.value = false })
+watch(allergenKey, () => { allergensConfirmed.value = false })
+
+// An extraction costs quota, so keep the draft if a phone kills the tab mid-review.
+const DRAFT_TTL = 24 * 60 * 60 * 1000
+const storageKey = computed(() => `foodboard.menu-import.${route.query.structure_id}`)
+function rememberDraft () {
+  try {
+    if (draft.value && !saved) localStorage.setItem(storageKey.value, JSON.stringify({ draft: draft.value, importId, at: Date.now() }))
+  } catch { /* Storage unavailable: the draft just won't survive a reload. */ }
+}
+function forgetDraft () {
+  try { localStorage.removeItem(storageKey.value) } catch { /* Nothing to clear. */ }
+}
+watch(draft, rememberDraft, { deep: true })
+function startDraft (value) {
+  draft.value = value
+  stage.value = 'review'
+  reviewed.value = false
+  allergensConfirmed.value = false
+}
+try {
+  const stored = JSON.parse(localStorage.getItem(storageKey.value) || 'null')
+  if (stored && Date.now() - stored.at < DRAFT_TTL) {
+    importId = stored.importId
+    startDraft(validateDraft(stored.draft))
+    restored.value = true
+  } else if (stored) forgetDraft()
+} catch { forgetDraft() }
 
 function showError (failure) {
   const key = `menu_import.errors.${failure.message}`
@@ -140,8 +197,11 @@ async function extract () {
   error.value = ''
   importId = crypto.randomUUID()
   try {
-    const result = await importRequest('extract', structure.value.structure_id, importId, file.value)
-    draft.value = validateDraft(result.draft)
+    // Gemini reads a 2400px photo as well as a 12 MP original, for a fraction of the upload.
+    const upload = file.value.type.startsWith('image/') && file.value.size > IMAGE_COMPRESS_BYTES ? await compressImage(file.value, 'menu') : file.value
+    const result = await importRequest('extract', structure.value.structure_id, importId, upload)
+    restored.value = false
+    startDraft(validateDraft(result.draft))
   } catch (failure) { showError(failure) } finally { busy.value = false }
 }
 function loadSample () {
@@ -149,7 +209,8 @@ function loadSample () {
   previewUrl.value = ''
   file.value = null
   importId = crypto.randomUUID()
-  draft.value = { title: t('menu_import.sample_title'), language: 'en', currency: structure.value.structure.currency, warnings: [], categories: [{ name: 'Main courses', description: '', items: [{ name: 'Garden pasta', description: 'Pasta, roasted tomatoes, basil', prices: [{ amount: '12.50', label: '' }], allergens: [6], warning: '' }, { name: 'Grilled vegetables', description: 'Seasonal vegetables with olive oil', prices: [{ amount: '9.00', label: 'Small' }, { amount: '14.00', label: 'Large' }], allergens: [], warning: '' }] }] }
+  restored.value = false
+  startDraft({ title: t('menu_import.sample_title'), language: 'en', currency: structure.value.structure.currency, warnings: [], categories: [{ name: 'Main courses', description: '', items: [{ name: 'Garden pasta', description: 'Pasta, roasted tomatoes, basil', prices: [{ amount: '12.50', label: '' }], allergens: [6], warning: '' }, { name: 'Grilled vegetables', description: 'Seasonal vegetables with olive oil', prices: [{ amount: '9.00', label: 'Small' }, { amount: '14.00', label: 'Large' }], allergens: [], warning: '' }] }] })
   error.value = ''
 }
 function restart () {
@@ -158,6 +219,8 @@ function restart () {
   reviewed.value = false
   error.value = ''
   saveAttempted.value = false
+  restored.value = false
+  forgetDraft()
 }
 function removeItem (categoryIndex, itemIndex) {
   const category = draft.value.categories[categoryIndex]
@@ -175,6 +238,7 @@ async function save () {
   try {
     const result = await importRequest('save', structure.value.structure_id, importId, JSON.stringify(checked))
     saved = true
+    forgetDraft()
     store.selectedStructure = structure.value
     await store.requestLists(structure.value.structure_id, true)
     store.list_id = result.list_id
@@ -182,7 +246,12 @@ async function save () {
   } catch (failure) { showError(failure) } finally { busy.value = false }
 }
 // Do not accidentally discard an extraction or navigate during a pending save.
-onBeforeRouteLeave(() => saved || ((!busy.value && !draft.value && !saveAttempted.value) || window.confirm(t('menu_import.discard'))))
+onBeforeRouteLeave(() => {
+  if (saved || (!busy.value && !draft.value && !saveAttempted.value)) return true
+  const leave = window.confirm(t('menu_import.discard'))
+  if (leave) forgetDraft()
+  return leave
+})
 const beforeUnload = event => { if (!saved && (draft.value || busy.value)) { event.preventDefault(); event.returnValue = '' } }
 window.addEventListener('beforeunload', beforeUnload)
 onBeforeUnmount(() => { window.removeEventListener('beforeunload', beforeUnload); if (previewUrl.value) URL.revokeObjectURL(previewUrl.value) })
@@ -220,6 +289,8 @@ textarea { resize: vertical; }
 .price-row label { flex: 1; min-width: 0; }
 .allergen-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
 .allergen-options label { display: flex; align-items: start; font-weight: 400; }
+.allergen-dish { padding: var(--s-4) 0; border-bottom: 1px solid var(--c-line); }
+.allergen-dish legend { font-size: 1rem; margin-bottom: var(--s-3); }
 summary { cursor: pointer; padding: .5rem 0; }
 .import-notice, .import-error { padding: var(--s-4); border: 1px solid var(--c-line); border-radius: 6px; margin: var(--s-4) 0; }
 ul.import-notice { padding-left: var(--s-6); }

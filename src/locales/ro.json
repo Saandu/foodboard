@@ -247,10 +247,8 @@
     "portion": "Porție / mărime",
     "remove_price": "Elimină prețul",
     "add_price": "Adaugă variantă de preț",
-    "allergens": "Alergeni declarați",
-    "allergen_help": "Selectează doar alergenii confirmați explicit de restaurant. Lipsa unei selecții nu înseamnă că preparatul nu conține alergeni.",
     "empty": "Păstrează cel puțin un preparat pentru salvare.",
-    "confirm_review": "Am verificat numele, prețurile, moneda și alergenii comparând cu originalul.",
+    "confirm_review": "Am verificat numele preparatelor, prețurile și moneda față de original.",
     "unpublished": "Meniul va fi salvat ca nepublicat. Îl poți edita și publica din panoul tău.",
     "saving": "Se salvează…",
     "discard": "Părăsești importul? Modificările nesalvate se vor pierde. Dacă salvarea este în curs, verifică panoul înainte de un nou import.",
@@ -283,8 +281,17 @@
       "too_many_items": "Poți importa maximum 150 de preparate.",
       "import_conflict": "Importul a fost deja salvat cu alt conținut. Verifică panoul înainte de un nou import.",
       "save_unavailable": "Salvarea nu a putut fi confirmată. Reîncearcă aceeași ciornă pentru a evita duplicatele.",
-      "currency_mismatch": "Monedele nu corespund. Verifică setările restaurantului și prețurile originale. Nu se efectuează conversii valutare."
-    }
+      "currency_mismatch": "Monedele nu corespund. Verifică setările restaurantului și prețurile originale. Nu se efectuează conversii valutare.",
+      "not_a_menu": "Nu s-au găsit preparate. Verifică dacă fișierul este un meniu sau încearcă o fotografie mai clară."
+    },
+    "allergen_step": "Confirmă alergenii",
+    "next_allergens": "Următorul pas: confirmă alergenii",
+    "allergen_step_help": "Compară fiecare preparat cu declarațiile de alergeni din meniul original. AI-ul poate citi greșit o legendă, iar o căsuță nebifată nu înseamnă că preparatul nu conține alergeni.",
+    "allergen_summary": "{declared} din {total} preparate au alergeni declarați.",
+    "no_allergens_declared": "Niciun alergen declarat.",
+    "confirm_allergens": "Am verificat alergenii fiecărui preparat față de meniul original.",
+    "back_to_dishes": "Înapoi la preparate",
+    "restored_source": "Ciornă restaurată de la ultima vizită. Fișierul original nu este păstrat, deschide-l separat pentru comparație."
   },
   "restaurants": "Restaurante",
   "add_restaurant": "Adaugă restaurant",
@@ -294,5 +301,6 @@
   "delete_restaurant_help": "Șterge acest restaurant și toate meniurile, categoriile și preparatele sale. Linkul public nu va mai funcționa. Acțiunea este ireversibilă.",
   "confirm_delete_menu": "Ștergi meniul „{name}” și toate categoriile și preparatele sale? Acțiunea este ireversibilă.",
   "confirm_delete_restaurant": "Ștergi restaurantul „{name}” și toate meniurile, categoriile și preparatele sale? Linkul public nu va mai funcționa. Acțiunea este ireversibilă.",
-  "delete_failed": "Ștergerea a eșuat. Datele pot fi încă prezente; reîncarcă pagina și încearcă din nou."
+  "delete_failed": "Ștergerea a eșuat. Datele pot fi încă prezente; reîncarcă pagina și încearcă din nou.",
+  "delete_protected": "Restaurantul demo comun și meniurile sale nu pot fi șterse. Creează-ți propriul cont pentru a încerca ștergerea."
 }

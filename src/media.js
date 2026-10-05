@@ -61,7 +61,9 @@ export const MAX_SOURCE_BYTES = 25 * 1024 * 1024
 export const IMAGE_PRESETS = {
   logo: { maxEdge: 800, quality: 0.85, targetBytes: 120 * 1024 },
   dish: { maxEdge: 1200, quality: 0.82, targetBytes: 220 * 1024 },
-  category: { maxEdge: 1200, quality: 0.82, targetBytes: 220 * 1024 }
+  category: { maxEdge: 1200, quality: 0.82, targetBytes: 220 * 1024 },
+  // Menu photos sent for AI extraction: small print has to stay legible.
+  menu: { maxEdge: 2400, quality: 0.85, targetBytes: 1500 * 1024 }
 }
 
 const DEFAULT_PRESET = { maxEdge: 1200, quality: 0.82, targetBytes: 220 * 1024 }

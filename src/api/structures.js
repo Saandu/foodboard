@@ -3,9 +3,9 @@
 import { supabase } from '../supabase.js'
 import { rows } from './query.js'
 
+/** Deletes a restaurant with every menu; resolves to the Storage paths nothing uses any more. */
 export async function deleteStructure (structureId) {
-  const { error } = await supabase.rpc('delete_restaurant_workspace', { p_structure_id: structureId })
-  if (error) throw new Error(`Could not delete the restaurant: ${error.message}`, { cause: error })
+  return (await rows(supabase.rpc('delete_restaurant_workspace', { p_structure_id: structureId }), 'Could not delete the restaurant')) || []
 }
 
 /** Every restaurant owned by an account, oldest first. */
