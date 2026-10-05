@@ -96,6 +96,13 @@ The alternative - filtering in the client - costs nothing to write and
 everything to get wrong once. Enforcing it in the database costs a migration
 and the discipline of adding a policy per table.
 
+That discipline was tested on 2026-10-05 by an AI-assisted security audit,
+which found eight real issues: most were guards written for the row in hand
+but not for the parent it points at, a column nobody expected to be written,
+or the account everyone shares. All eight are fixed and each has a regression
+case; the findings and fixes are in
+[docs/security-audit-2026-10.md](docs/security-audit-2026-10.md).
+
 ### AI menu import: the model proposes, the owner decides
 
 Typing in a 60-dish menu is the slowest part of onboarding, so owners can upload
@@ -313,7 +320,7 @@ tests/            Vitest suites
 
 ## Testing
 
-`npm test` - **174 passing**, plus live database assertions when their
+`npm test` - **193 passing**, plus live database assertions when their
 disposable-account credentials are present. `npm run test:e2e` runs 13 browser
 journeys on desktop and mobile (26 runs): the public menu, 404 recovery, demo
 login, menu import and deletion, with automated WCAG A/AA scans on the pages
@@ -339,6 +346,7 @@ they visit. The Edge Function has its own Deno suite.
 | `tests/menuImport.test.js` | file sniffing, bounded reads, draft validation and repair of model output |
 | `tests/menuImportEval.test.js` | the accuracy-eval scorer: matching, allergen errors, injection checks |
 | `tests/menuImportDatabase.test.js` | the import, quota and deletion SQL, run in real Postgres (PGlite) |
+| `tests/securityFixes.test.js` | the eight findings of the October 2026 security audit, each against every migration on PGlite |
 | `supabase/functions/menu-import/index_test.ts` | auth, ownership and quota are enforced before any paid call |
 | `e2e/portfolio-flow.spec.js` | published-menu, missing-route and one-click-demo browser journeys |
 | `e2e/menu-import.spec.js` | upload → review → allergen confirmation → save, retries, deletion, demo guard |
